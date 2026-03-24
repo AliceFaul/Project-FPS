@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7286a3b200e97c4488ee68d1f7c382af, type: 3}
+  m_Name: Rocket Launcher
+  m_EditorClassIdentifier: 
+  ID: 3
+  weaponPrefab: {fileID: 134046914909547288, guid: 59bc189c04c49e64b89cd70bce321fb6, type: 3}
+  HitVFXPrefab: {fileID: 4119116250391436092, guid: 9c821fce74a238e44b880189d86a1928, type: 3}
+  shootString: ShootRL
+  ZoomRotationSpeed: 0.5
+  ZoomAmount: 17
+  Damage: 10
+  FireRate: 1.5
+  accuracyMod: 0
+  MagazineSize: 8
+  ammoOnPickup: 3
+  IsAutomatic: 0
+  CanZoom: 1
+  CrosshairUI_ID: 1
+  HitScan: 0
+  PickedUp: 0
