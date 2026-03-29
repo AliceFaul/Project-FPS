@@ -4,15 +4,24 @@ using System.Threading.Tasks;
 using Fusion;
 using Fusion.Sockets;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
     private NetworkRunner _runner;
+
+    // Dictionary to keep track of spawned characters for each player
+    private Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
+    [SerializeField] private NetworkPrefabRef playerPrefab;
 
     private void Awake() {
         if(_runner == null) {
             _runner = gameObject.AddComponent<NetworkRunner>();
         }
         DontDestroyOnLoad(this);
+    }
+
+    private async void Start() {
+        await StartLobby();
     }
 
     // function let player join lobby in start of game
@@ -27,6 +36,37 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
             Debug.Log("Join lobby completed");
         } else {
             Debug.Log($"Failed to join lobby: {result.ShutdownReason}");
+        }
+    }
+
+    public void OnStartHost() {
+        StartGame(GameMode.Host);
+    }
+
+    public void OnStartClient() {
+        StartGame(GameMode.Client);
+    }
+
+    private async void StartGame(GameMode mode) {
+        if(_runner == null) {
+            return;
+        }
+        var scene = SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex + 1);
+        var sceneInfo = new NetworkSceneInfo();
+        if (scene.IsValid) {
+            sceneInfo.AddSceneRef(scene, LoadSceneMode.Additive);
+        }
+        var result = await _runner.StartGame(new StartGameArgs {
+            GameMode = mode,
+            SessionName = "TestSession",
+            Scene = scene,
+            PlayerCount = 10,
+            SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
+        });
+        if(result.Ok) {
+            Debug.Log("Start game completed");
+        } else {
+            Debug.Log($"Failed to start game: {result.ShutdownReason}");
         }
     }
 
@@ -67,8 +107,29 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
         }
     }
     
-    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { }
-    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player) { }
+    // function spawn character for player when player joined room 
+    // and despawn character when player left room
+    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { 
+        if(_runner.IsServer) {
+            Vector3 position = new Vector3((player.RawEncoded % runner.Config.Simulation.PlayerCount) * 3, 1, 0);
+            NetworkObject character = _runner.Spawn(
+                playerPrefab,
+                position,
+                Quaternion.identity,
+                player
+            );
+            _spawnedCharacters[player] = character;
+        }
+    }
+
+    // function let player leave room and despawn character when player left
+    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player) { 
+        if(_spawnedCharacters.TryGetValue(player, out NetworkObject character)) {
+            _runner.Despawn(character);
+            _spawnedCharacters.Remove(player);
+        }
+    }
+
     public void OnInput(NetworkRunner runner, NetworkInput input) { }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
