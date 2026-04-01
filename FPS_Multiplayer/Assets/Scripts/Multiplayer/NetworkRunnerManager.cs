@@ -11,6 +11,7 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
 
     // Dictionary to keep track of spawned characters for each player
     private Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
+    private Dictionary<PlayerRef, Vector3> _spawnPositions = new Dictionary<PlayerRef, Vector3>();
     [SerializeField] private NetworkPrefabRef playerPrefab;
 
     private void Awake() {
@@ -106,12 +107,24 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
             Debug.Log($"Failed to join game: {result.ShutdownReason}");
         }
     }
+
+    public async void RestartCurrentScene() {
+        int currentScene = SceneManager.GetActiveScene().buildIndex;
+
+        if(_runner != null && _runner.IsRunning) {
+            await _runner.Shutdown();
+            _spawnedCharacters.Clear();
+        }
+
+        SceneManager.LoadScene(currentScene);
+    }
     
     // function spawn character for player when player joined room 
     // and despawn character when player left room
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { 
         if(_runner.IsServer) {
             Vector3 position = new Vector3((player.RawEncoded % runner.Config.Simulation.PlayerCount) * 3, 1, 0);
+            _spawnPositions[player] = position;
             NetworkObject character = _runner.Spawn(
                 playerPrefab,
                 position,
@@ -127,6 +140,38 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
         if(_spawnedCharacters.TryGetValue(player, out NetworkObject character)) {
             _runner.Despawn(character);
             _spawnedCharacters.Remove(player);
+        }
+        _spawnPositions.Remove(player);
+    }
+
+    public bool TryGetSpawnPosition(PlayerRef player, out Vector3 spawnPosition) {
+        return _spawnPositions.TryGetValue(player, out spawnPosition);
+    }
+
+    public void RespawnPlayer(PlayerHealth playerHealth) {
+        if(playerHealth == null) {
+            return;
+        }
+
+        NetworkObject networkObject = playerHealth.GetComponent<NetworkObject>();
+        if(networkObject == null) {
+            return;
+        }
+
+        if(!TryGetSpawnPosition(networkObject.InputAuthority, out Vector3 spawnPosition)) {
+            spawnPosition = new Vector3((networkObject.InputAuthority.RawEncoded % _runner.Config.Simulation.PlayerCount) * 3, 1, 0);
+        }
+
+        Transform playerTransform = playerHealth.transform;
+        CharacterController characterController = playerHealth.GetComponent<CharacterController>();
+        if(characterController != null) {
+            characterController.enabled = false;
+        }
+
+        playerTransform.SetPositionAndRotation(spawnPosition, Quaternion.identity);
+
+        if(characterController != null) {
+            characterController.enabled = true;
         }
     }
 

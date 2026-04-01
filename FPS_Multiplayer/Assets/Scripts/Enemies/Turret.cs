@@ -23,7 +23,6 @@ public class Turret : MonoBehaviour
 
     private void Start()
     {
-        player = FindFirstObjectByType<PlayerHealth>();
         gameManager = FindFirstObjectByType<GameManager>();
         GetComponent<EnemyHealth>().Init(gameManager);
         StartCoroutine(FireRoutine());
@@ -31,6 +30,8 @@ public class Turret : MonoBehaviour
 
     void Update()
     {
+        EnsurePlayerTarget();
+
         if (playerTargetPoint)
         {
             targeting.LookAt(playerTargetPoint.position);
@@ -41,8 +42,16 @@ public class Turret : MonoBehaviour
 
     IEnumerator FireRoutine()
     {
-        while (player)
+        while (true)
         {
+            EnsurePlayerTarget();
+
+            if (player == null || playerTargetPoint == null)
+            {
+                yield return null;
+                continue;
+            }
+
             if (!isShotReady)
             {
                 yield return new WaitForSeconds(fireRate);
@@ -56,11 +65,31 @@ public class Turret : MonoBehaviour
                 {
                     SoundFXManager.instance.PlaySoundFX(shootClip,transform);
                     GameObject proj = Instantiate(projectilePrefab, projectileSpawnPoint.position, Quaternion.identity);
-                    proj.transform.LookAt(playerTargetPoint);
+                    proj.transform.LookAt(playerTargetPoint.position);
                     proj.GetComponent<Projectile>().Init(damage);
                     isShotReady = false;
                 }
             }
+        }
+    }
+
+    private void EnsurePlayerTarget()
+    {
+        if (player == null)
+        {
+            player = FindFirstObjectByType<PlayerHealth>();
+        }
+
+        if (player == null)
+        {
+            playerTargetPoint = null;
+            return;
+        }
+
+        if (playerTargetPoint == null)
+        {
+            var target = player.transform.Find("PlayerCameraRoot");
+            playerTargetPoint = target != null ? target : player.transform;
         }
     }
 }

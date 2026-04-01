@@ -29,6 +29,13 @@ public class GameManager : MonoBehaviour
 
     public void RestartLevelButton()
     {
+        var runnerManager = FindFirstObjectByType<NetworkRunnerManager>();
+        if (runnerManager != null)
+        {
+            runnerManager.RestartCurrentScene();
+            return;
+        }
+
         int currentScene = SceneManager.GetActiveScene().buildIndex;
         SceneManager.LoadScene(currentScene);
     }

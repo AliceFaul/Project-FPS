@@ -13,14 +13,11 @@ public class SpawnGate : MonoBehaviour
     GameManager gameManager;
     PlayerHealth player;
 
-    const string PLAYER_STRING = "Player";
-
     int currentRobotCount = 0;
     public bool IsActive { get; set; }
 
     void Start()
     {
-        player = FindFirstObjectByType<PlayerHealth>();
         gameManager = FindFirstObjectByType<GameManager>();
         GetComponent<EnemyHealth>().Init(gameManager);
         StartCoroutine(SpawnEnemiesCoroutine());
@@ -29,31 +26,57 @@ public class SpawnGate : MonoBehaviour
 
     IEnumerator SpawnEnemiesCoroutine()
     {
-        while (player)
+        while (true)
         {
             yield return new WaitForSeconds(enemySpawnInterval);
+
+            if (player == null) {
+                player = FindFirstObjectByType<PlayerHealth>();
+            }
+
+            if (player == null || gameManager == null) {
+                continue;
+            }
+
             if (isActive && currentRobotCount < maxRobotCount)
             {
-                SoundFXManager.instance.PlaySoundFX(spawnRobotClip,transform);
-                GameObject newEnemy = Instantiate(enemy, transform.position, transform.rotation);
-                newEnemy.GetComponent<Robot>().Init(player,gameManager,this);
-                currentRobotCount++;
+                SpawnEnemy();
             }
         }
     }
 
     void OnTriggerEnter(Collider other)
     {
-        if(other.CompareTag(PLAYER_STRING)) {isActive = true;}
+        if(other.GetComponentInParent<PlayerHealth>() != null) {
+            player = other.GetComponentInParent<PlayerHealth>();
+            isActive = true;
+
+            if (currentRobotCount < maxRobotCount) {
+                SpawnEnemy();
+            }
+        }
     }
 
     void OnTriggerExit(Collider other)
     {
-        if(other.CompareTag(PLAYER_STRING) && canBeReset) {isActive = false;}
+        if(other.GetComponentInParent<PlayerHealth>() != null && canBeReset) {
+            isActive = false;
+        }
     }
 
     public void ChildRobotDestroyed()
     {
         currentRobotCount--;
+    }
+
+    private void SpawnEnemy() {
+        if (enemy == null || player == null || gameManager == null) {
+            return;
+        }
+
+        SoundFXManager.instance.PlaySoundFX(spawnRobotClip, transform);
+        GameObject newEnemy = Instantiate(enemy, transform.position, transform.rotation);
+        newEnemy.GetComponent<Robot>().Init(player, gameManager, this);
+        currentRobotCount++;
     }
 }
