@@ -45,12 +45,51 @@ public class ActiveWeapon : MonoBehaviour
     public int[] CurrentAmmoList => currentAmmoList;
     public int[] MaxAmmoList => maxAmmoList;
 
+    private bool isInitialized = false;
+
     void Awake()
     {
         starterAssetsInputs = GetComponentInParent<StarterAssetsInputs>();
         animator = GetComponent<Animator>();
-        defaultFOV = playerFollowCam.m_Lens.FieldOfView;
+        // defaultFOV = playerFollowCam.m_Lens.FieldOfView;
         firstPersonController = GetComponentInParent<FirstPersonController>();
+        // defaultZoomRotationSpeed = firstPersonController.RotationSpeed;
+
+        // for (int i = 0; i < weaponList.Length; i++)
+        // {
+        //     weaponList[i].PickedUp = weaponsPickedUp[i];
+        //     weaponList[i].MagazineSize = maxAmmoList[i];
+        // }
+
+        // foreach(GameObject icon in weaponIcons)
+        // {
+        //     icon.SetActive(false);
+        // }
+
+        // if(checkpointAmmoList != null) currentAmmoList = checkpointAmmoList;
+        // if(CheckpointWeaponsPickedUp != null) weaponsPickedUp = CheckpointWeaponsPickedUp;
+    }
+
+    // Initialize is called in PlayerNetworkSetup 
+    // when the player spawns in, to set up the weapon system with the correct references and values. 
+    // This is necessary because the player object is not active at the start of the scene, 
+    // so Awake cannot be used to set up these references and values.
+    public void Initialize(
+        Camera weaponCam, 
+        CinemachineVirtualCamera playerFollowCam, 
+        GameObject crosshair, 
+        GameObject[] zoomUI, 
+        GameObject[] weaponIcons, 
+        TMP_Text ammoText)
+    {
+        this.weaponCam = weaponCam;
+        this.playerFollowCam = playerFollowCam;
+        this.crosshair = crosshair;
+        this.zoomUI = zoomUI;
+        this.weaponIcons = weaponIcons;
+        this.ammoText = ammoText;
+
+        defaultFOV = playerFollowCam.m_Lens.FieldOfView;
         defaultZoomRotationSpeed = firstPersonController.RotationSpeed;
 
         for (int i = 0; i < weaponList.Length; i++)
@@ -64,21 +103,29 @@ public class ActiveWeapon : MonoBehaviour
             icon.SetActive(false);
         }
 
-        if(checkpointAmmoList != null) currentAmmoList = checkpointAmmoList;
-        if(CheckpointWeaponsPickedUp != null) weaponsPickedUp = CheckpointWeaponsPickedUp;
-    }
-
-    void Start()
-    {
-        SwitchWeapon(startingWeaponSO);
-        for (int i = 0; i < weaponList.Length; i++)
-        {
+        for (int i = 0; i < weaponList.Length; i++) {
             if (weaponList[i].PickedUp) weaponIcons[i].SetActive(true);
         }
+
+        if(checkpointAmmoList != null) currentAmmoList = checkpointAmmoList;
+        if(CheckpointWeaponsPickedUp != null) weaponsPickedUp = CheckpointWeaponsPickedUp;
+
+        SwitchWeapon(startingWeaponSO);
+        isInitialized = true;
     }
+
+    // void Start()
+    // {
+    //     SwitchWeapon(startingWeaponSO);
+    //     for (int i = 0; i < weaponList.Length; i++)
+    //     {
+    //         if (weaponList[i].PickedUp) weaponIcons[i].SetActive(true);
+    //     }
+    // }
 
     void Update()
     {
+        if(!isInitialized) return;
         HandleShoot();
         HandleZoom();
     }
@@ -215,4 +262,5 @@ public class ActiveWeapon : MonoBehaviour
             maxAmmoList[i] = (int)Mathf.Ceil(weaponList[i].MagazineSize * 1.25f);
         }
     }
+
 }

@@ -105,6 +105,8 @@ GameObject:
   - component: {fileID: 8040993034636308884}
   - component: {fileID: 7829634896877739932}
   - component: {fileID: 8130565372713198069}
+  - component: {fileID: 1618176570684372503}
+  - component: {fileID: 1789448726504012015}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -388,6 +390,42 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0.2, z: 0}
+--- !u!114 &1618176570684372503
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1037704445733155402}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SortKey: 1356000992
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 1789448726504012015}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &1789448726504012015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1037704445733155402}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3feddfb6b762fdb4a89a225923a53748, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  activeWeapon: {fileID: 3932523327278385741}
+  playerHealth: {fileID: 8040993034636308884}
+  weaponCamera: {fileID: 6695616348851039383}
+  weaponCameraTransform: {fileID: 0}
+  cameraTarget: {fileID: 0}
 --- !u!1 &1522224465426003917
 GameObject:
   m_ObjectHideFlags: 0
@@ -579,7 +617,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 128
+    m_Bits: 192
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
