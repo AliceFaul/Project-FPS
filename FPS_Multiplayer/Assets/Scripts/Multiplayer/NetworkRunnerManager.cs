@@ -12,6 +12,9 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
     // Dictionary to keep track of spawned characters for each player
     private Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
     private Dictionary<PlayerRef, Vector3> _spawnPositions = new Dictionary<PlayerRef, Vector3>();
+    private Dictionary<PlayerRef, Quaternion> _spawnRotations = new Dictionary<PlayerRef, Quaternion>();
+    private Dictionary<PlayerRef, int> _assignedSpawnPointIndices = new Dictionary<PlayerRef, int>();
+    private readonly List<Transform> _sceneSpawnPoints = new List<Transform>();
     [SerializeField] private NetworkPrefabRef playerPrefab;
 
     private void Awake() {
@@ -114,6 +117,10 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
         if(_runner != null && _runner.IsRunning) {
             await _runner.Shutdown();
             _spawnedCharacters.Clear();
+            _spawnPositions.Clear();
+            _spawnRotations.Clear();
+            _assignedSpawnPointIndices.Clear();
+            _sceneSpawnPoints.Clear();
         }
 
         SceneManager.LoadScene(currentScene);
@@ -123,12 +130,13 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
     // and despawn character when player left room
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { 
         if(_runner.IsServer) {
-            Vector3 position = new Vector3((player.RawEncoded % runner.Config.Simulation.PlayerCount) * 3, 1, 0);
+            ResolveSpawnPose(player, runner, out Vector3 position, out Quaternion rotation);
             _spawnPositions[player] = position;
+            _spawnRotations[player] = rotation;
             NetworkObject character = _runner.Spawn(
                 playerPrefab,
                 position,
-                Quaternion.identity,
+                rotation,
                 player
             );
             _spawnedCharacters[player] = character;
@@ -140,8 +148,10 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
         if(_spawnedCharacters.TryGetValue(player, out NetworkObject character)) {
             _runner.Despawn(character);
             _spawnedCharacters.Remove(player);
-        }
+        } 
         _spawnPositions.Remove(player);
+        _spawnRotations.Remove(player);
+        _assignedSpawnPointIndices.Remove(player);
     }
 
     public bool TryGetSpawnPosition(PlayerRef player, out Vector3 spawnPosition) {
@@ -158,8 +168,11 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
             return;
         }
 
+        Quaternion spawnRotation;
         if(!TryGetSpawnPosition(networkObject.InputAuthority, out Vector3 spawnPosition)) {
-            spawnPosition = new Vector3((networkObject.InputAuthority.RawEncoded % _runner.Config.Simulation.PlayerCount) * 3, 1, 0);
+            ResolveSpawnPose(networkObject.InputAuthority, _runner, out spawnPosition, out spawnRotation);
+        } else if(!_spawnRotations.TryGetValue(networkObject.InputAuthority, out spawnRotation)) {
+            spawnRotation = Quaternion.identity;
         }
 
         Transform playerTransform = playerHealth.transform;
@@ -168,7 +181,7 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
             characterController.enabled = false;
         }
 
-        playerTransform.SetPositionAndRotation(spawnPosition, Quaternion.identity);
+        playerTransform.SetPositionAndRotation(spawnPosition, spawnRotation);
 
         if(characterController != null) {
             characterController.enabled = true;
@@ -186,10 +199,82 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
     public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
     public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
     public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
-    public void OnSceneLoadDone(NetworkRunner runner) { }
+    public void OnSceneLoadDone(NetworkRunner runner) {
+        RefreshSpawnPoints();
+
+        if(runner.IsServer) {
+            UpdateSpawnAssignmentsForExistingPlayers(runner);
+        }
+    }
     public void OnSceneLoadStart(NetworkRunner runner) { }
     public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
     public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
+
+    private void RefreshSpawnPoints() {
+        _sceneSpawnPoints.Clear();
+
+        Transform[] transforms = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach(Transform sceneTransform in transforms) {
+            if(sceneTransform == null || !sceneTransform.gameObject.scene.isLoaded) {
+                continue;
+            }
+
+            if(!sceneTransform.name.StartsWith("SpawnPoint", StringComparison.OrdinalIgnoreCase)) {
+                continue;
+            }
+
+            _sceneSpawnPoints.Add(sceneTransform);
+        }
+
+        _sceneSpawnPoints.Sort((left, right) => string.CompareOrdinal(left.name, right.name));
+    }
+
+    private void ResolveSpawnPose(PlayerRef player, NetworkRunner runner, out Vector3 position, out Quaternion rotation) {
+        RefreshSpawnPoints();
+
+        if(_sceneSpawnPoints.Count > 0) {
+            int spawnPointIndex = GetOrAssignSpawnPointIndex(player);
+            Transform spawnPoint = _sceneSpawnPoints[spawnPointIndex];
+            position = spawnPoint.position;
+            rotation = spawnPoint.rotation;
+            return;
+        }
+
+        position = new Vector3((player.RawEncoded % runner.Config.Simulation.PlayerCount) * 3, 1, 0);
+        rotation = Quaternion.identity;
+    }
+
+    private int GetOrAssignSpawnPointIndex(PlayerRef player) {
+        if(_assignedSpawnPointIndices.TryGetValue(player, out int existingIndex) && existingIndex < _sceneSpawnPoints.Count) {
+            return existingIndex;
+        }
+
+        for(int index = 0; index < _sceneSpawnPoints.Count; index++) {
+            if(!_assignedSpawnPointIndices.ContainsValue(index)) {
+                _assignedSpawnPointIndices[player] = index;
+                return index;
+            }
+        }
+
+        int fallbackIndex = Mathf.Abs(player.RawEncoded) % _sceneSpawnPoints.Count;
+        _assignedSpawnPointIndices[player] = fallbackIndex;
+        return fallbackIndex;
+    }
+
+    private void UpdateSpawnAssignmentsForExistingPlayers(NetworkRunner runner) {
+        foreach(KeyValuePair<PlayerRef, NetworkObject> entry in _spawnedCharacters) {
+            if(entry.Value == null) {
+                continue;
+            }
+
+            ResolveSpawnPose(entry.Key, runner, out Vector3 position, out Quaternion rotation);
+            _spawnPositions[entry.Key] = position;
+            _spawnRotations[entry.Key] = rotation;
+
+            Transform characterTransform = entry.Value.transform;
+            characterTransform.SetPositionAndRotation(position, rotation);
+        }
+    }
 }

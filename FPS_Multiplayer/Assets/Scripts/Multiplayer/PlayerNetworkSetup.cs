@@ -12,10 +12,16 @@ public class PlayerNetworkSetup : NetworkBehaviour {
     [SerializeField] private Transform weaponCameraTransform;
     [SerializeField] private Transform cameraTarget;
 
+    [Header("Visibility Setup")]
+    [SerializeField] private GameObject[] localOnlyObjects;
+    [SerializeField] private GameObject[] remoteOnlyObjects;
+    [SerializeField] private UnityEngine.Behaviour[] localOnlyBehaviours;
+
     // This method is called when the player spawns in the game, 
     // and is responsible for setting up the player's components and references.
     public override void Spawned() {
         CacheComponents();
+        ApplyVisibilityState();
 
         if(!Object.HasInputAuthority) {
             if(weaponCamera != null) {
@@ -99,6 +105,14 @@ public class PlayerNetworkSetup : NetworkBehaviour {
         }
     }
 
+    private void ApplyVisibilityState() {
+        bool isLocalPlayer = Object != null && Object.HasInputAuthority;
+
+        SetObjectsActive(localOnlyObjects, isLocalPlayer);
+        SetObjectsActive(remoteOnlyObjects, !isLocalPlayer);
+        SetBehavioursEnabled(localOnlyBehaviours, isLocalPlayer);
+    }
+
     // Utility method to find a CinemachineVirtualCamera in the scene by name, including inactive objects.
     private static CinemachineVirtualCamera FindSceneCamera(string cameraName) {
         var cameras = FindObjectsByType<CinemachineVirtualCamera>(FindObjectsInactive.Include, FindObjectsSortMode.None);
@@ -109,6 +123,30 @@ public class PlayerNetworkSetup : NetworkBehaviour {
         }
 
         return null;
+    }
+
+    private static void SetObjectsActive(GameObject[] objects, bool isActive) {
+        if(objects == null) {
+            return;
+        }
+
+        foreach(var obj in objects) {
+            if(obj != null) {
+                obj.SetActive(isActive);
+            }
+        }
+    }
+
+    private static void SetBehavioursEnabled(UnityEngine.Behaviour[] behaviours, bool isEnabled) {
+        if(behaviours == null) {
+            return;
+        }
+
+        foreach(var behaviour in behaviours) {
+            if(behaviour != null) {
+                behaviour.enabled = isEnabled;
+            }
+        }
     }
 
     // Utility method to find the first object of a given type in the scene, including inactive objects.
