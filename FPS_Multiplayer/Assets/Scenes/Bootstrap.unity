@@ -750,6 +750,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerPrefab:
     RawGuidValue: b0f4cbf3a37d8984ca8064112643ab86
+  spawnPoint: {fileID: 0}
+  spawnRadius: 0.3
 --- !u!1 &1902838281
 GameObject:
   m_ObjectHideFlags: 0

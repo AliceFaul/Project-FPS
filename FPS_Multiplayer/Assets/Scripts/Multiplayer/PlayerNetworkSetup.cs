@@ -3,6 +3,10 @@ using Fusion;
 using Unity.Cinemachine;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
+using StarterAssets;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 public class PlayerNetworkSetup : NetworkBehaviour {
     [Header("Player Components")]
@@ -11,6 +15,11 @@ public class PlayerNetworkSetup : NetworkBehaviour {
     [SerializeField] private Camera weaponCamera;
     [SerializeField] private Transform weaponCameraTransform;
     [SerializeField] private Transform cameraTarget;
+    [SerializeField] private FusionPlayerController fusionPlayerController;
+    [SerializeField] private FirstPersonController firstPersonController;
+#if ENABLE_INPUT_SYSTEM
+    [SerializeField] private PlayerInput playerInput;
+#endif
 
     [Header("Visibility Setup")]
     [SerializeField] private GameObject[] localOnlyObjects;
@@ -22,6 +31,7 @@ public class PlayerNetworkSetup : NetworkBehaviour {
     public override void Spawned() {
         CacheComponents();
         ApplyVisibilityState();
+        DisableLegacyControllerIfNeeded();
 
         if(!Object.HasInputAuthority) {
             if(weaponCamera != null) {
@@ -103,14 +113,43 @@ public class PlayerNetworkSetup : NetworkBehaviour {
                 cameraTarget = target;
             }
         }
+
+        if(fusionPlayerController == null) {
+            fusionPlayerController = GetComponent<FusionPlayerController>();
+        }
+
+        if(firstPersonController == null) {
+            firstPersonController = GetComponent<FirstPersonController>();
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        if(playerInput == null) {
+            playerInput = GetComponent<PlayerInput>();
+        }
+#endif
+
+        DisableLegacyControllerIfNeeded();
     }
 
+    // This method applies the visibility state to the player's components 
+    // based on whether this is the local player or a remote player.
     private void ApplyVisibilityState() {
         bool isLocalPlayer = Object != null && Object.HasInputAuthority;
 
         SetObjectsActive(localOnlyObjects, isLocalPlayer);
         SetObjectsActive(remoteOnlyObjects, !isLocalPlayer);
         SetBehavioursEnabled(localOnlyBehaviours, isLocalPlayer);
+#if ENABLE_INPUT_SYSTEM
+        if(playerInput != null) {
+            playerInput.enabled = isLocalPlayer;
+        }
+#endif
+    }
+
+    private void DisableLegacyControllerIfNeeded() {
+        if(fusionPlayerController != null && firstPersonController != null) {
+            firstPersonController.enabled = false;
+        }
     }
 
     // Utility method to find a CinemachineVirtualCamera in the scene by name, including inactive objects.
@@ -125,6 +164,7 @@ public class PlayerNetworkSetup : NetworkBehaviour {
         return null;
     }
 
+    // Utility method to set an array of GameObjects active or inactive, with null checks.
     private static void SetObjectsActive(GameObject[] objects, bool isActive) {
         if(objects == null) {
             return;
@@ -136,7 +176,8 @@ public class PlayerNetworkSetup : NetworkBehaviour {
             }
         }
     }
-
+    
+    // Utility method to enable or disable an array of UnityEngine.Behaviour components.
     private static void SetBehavioursEnabled(UnityEngine.Behaviour[] behaviours, bool isEnabled) {
         if(behaviours == null) {
             return;

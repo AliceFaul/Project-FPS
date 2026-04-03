@@ -80,11 +80,14 @@ public class PlayerHealth : MonoBehaviour
         _isRespawning = true;
 
         FirstPersonController firstPersonController = GetComponent<FirstPersonController>();
+        FusionPlayerController fusionPlayerController = GetComponent<FusionPlayerController>();
         CharacterController characterController = GetComponent<CharacterController>();
         StarterAssetsInputs starterAssetsInputs = GetComponent<StarterAssetsInputs>();
         NetworkRunnerManager runnerManager = FindFirstObjectByType<NetworkRunnerManager>();
 
-        if (firstPersonController != null) {
+        if (fusionPlayerController != null) {
+            fusionPlayerController.enabled = false;
+        } else if (firstPersonController != null) {
             firstPersonController.enabled = false;
         }
 
@@ -129,7 +132,9 @@ public class PlayerHealth : MonoBehaviour
             characterController.enabled = true;
         }
 
-        if (firstPersonController != null) {
+        if (fusionPlayerController != null) {
+            fusionPlayerController.enabled = true;
+        } else if (firstPersonController != null) {
             firstPersonController.enabled = true;
         }
 
