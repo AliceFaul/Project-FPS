@@ -471,18 +471,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5fceafa59eec37b4187eff891249c3ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 5
-  sprintSpeed: 8
-  rotationSpeed: 1
-  speedChangeRate: 10
-  instantHorizontalMovement: 1
+  moveSpeed: 4
+  sprintSpeed: 7
+  rotationSpeed: 3
+  speedChangeRate: 45
   jumpHeight: 1.2
   gravity: -15
-  jumpTimeout: 0.1
-  cameraTarget: {fileID: 2343107042455149130}
+  grounded: 1
+  groundedOffset: -0.14
+  groundedRadius: 0.5
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 1
+  cinemachineCameraTarget: {fileID: 2683760635097298139}
   topClamp: 89
   bottomClamp: -89
-  useLegacyVerticalLook: 1
+  enableHeadBob: 1
+  bobFrequency: 11.5
+  bobHorizontalAmplitude: 0.035
+  bobVerticalAmplitude: 0.05
+  bobSprintMultiplier: 1.6
+  bobReturnSpeed: 14
+  bobSmoothness: 20
+  enableLookSway: 1
+  swayAmount: 2.2
+  swaySmoothness: 12
+  enableLandingBump: 1
+  landingBumpAmount: 0.045
+  landingBumpRecoverSpeed: 10
 --- !u!1 &1522224465426003917
 GameObject:
   m_ObjectHideFlags: 0

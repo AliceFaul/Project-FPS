@@ -17,6 +17,8 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
     private Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
     private Dictionary<PlayerRef, Vector3> _spawnPositions = new Dictionary<PlayerRef, Vector3>();
     private Dictionary<PlayerRef, Quaternion> _spawnRotations = new Dictionary<PlayerRef, Quaternion>();
+    private StarterAssetsInputs _inputs;
+
     [SerializeField] private NetworkPrefabRef playerPrefab;
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private float spawnRadius = 3f;
@@ -190,24 +192,26 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
     }
 
     public void OnInput(NetworkRunner runner, NetworkInput input) {
-        StarterAssetsInputs starterAssetsInputs = FindLocalStarterAssetsInputs();
-        if(starterAssetsInputs == null) {
+        if(_inputs == null) {
+            _inputs = FindLocalStarterAssetsInputs();
+        }
+        if(_inputs == null) {
             return;
         }
-
         NetworkButtons buttons = default;
-        if(starterAssetsInputs.jump) {
-            buttons.Set((int)NetworkPlayerButtons.Jump, true);
+        if(_inputs.jump) {
+            buttons.Set(NetworkPlayerButtons.Jump, true);
+            _inputs.jump = false; // Reset jump input after processing to prevent continuous jumping
         }
-        if(starterAssetsInputs.sprint) {
-            buttons.Set((int)NetworkPlayerButtons.Sprint, true);
+        if(_inputs.sprint) {
+            buttons.Set(NetworkPlayerButtons.Sprint, true);
         }
-
-        input.Set(new NetworkPlayerInputData {
-            Move = starterAssetsInputs.move,
-            Look = starterAssetsInputs.look,
-            Buttons = buttons,
-        });
+        NetworkPlayerInputData inputData = new NetworkPlayerInputData {
+            Move = _inputs.move,
+            Look = _inputs.look,
+            Buttons = buttons
+        };
+        input.Set(inputData);
     }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
