@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Fusion;
 using Fusion.Sockets;
+using StarterAssets;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
     private NetworkRunner _runner;
@@ -12,7 +16,12 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
     // Dictionary to keep track of spawned characters for each player
     private Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
     private Dictionary<PlayerRef, Vector3> _spawnPositions = new Dictionary<PlayerRef, Vector3>();
+    private Dictionary<PlayerRef, Quaternion> _spawnRotations = new Dictionary<PlayerRef, Quaternion>();
+    private StarterAssetsInputs _inputs;
+
     [SerializeField] private NetworkPrefabRef playerPrefab;
+    [SerializeField] private Transform spawnPoint;
+    [SerializeField] private float spawnRadius = 3f;
 
     private void Awake() {
         if(_runner == null) {
@@ -114,6 +123,8 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
         if(_runner != null && _runner.IsRunning) {
             await _runner.Shutdown();
             _spawnedCharacters.Clear();
+            _spawnPositions.Clear();
+            _spawnRotations.Clear();
         }
 
         SceneManager.LoadScene(currentScene);
@@ -123,12 +134,13 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
     // and despawn character when player left room
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player) { 
         if(_runner.IsServer) {
-            Vector3 position = new Vector3((player.RawEncoded % runner.Config.Simulation.PlayerCount) * 3, 1, 0);
+            ResolveSpawnPose(player, runner, out Vector3 position, out Quaternion rotation);
             _spawnPositions[player] = position;
+            _spawnRotations[player] = rotation;
             NetworkObject character = _runner.Spawn(
                 playerPrefab,
                 position,
-                Quaternion.identity,
+                rotation,
                 player
             );
             _spawnedCharacters[player] = character;
@@ -140,8 +152,9 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
         if(_spawnedCharacters.TryGetValue(player, out NetworkObject character)) {
             _runner.Despawn(character);
             _spawnedCharacters.Remove(player);
-        }
+        } 
         _spawnPositions.Remove(player);
+        _spawnRotations.Remove(player);
     }
 
     public bool TryGetSpawnPosition(PlayerRef player, out Vector3 spawnPosition) {
@@ -158,8 +171,11 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
             return;
         }
 
+        Quaternion spawnRotation;
         if(!TryGetSpawnPosition(networkObject.InputAuthority, out Vector3 spawnPosition)) {
-            spawnPosition = new Vector3((networkObject.InputAuthority.RawEncoded % _runner.Config.Simulation.PlayerCount) * 3, 1, 0);
+            ResolveSpawnPose(networkObject.InputAuthority, _runner, out spawnPosition, out spawnRotation);
+        } else if(!_spawnRotations.TryGetValue(networkObject.InputAuthority, out spawnRotation)) {
+            spawnRotation = Quaternion.identity;
         }
 
         Transform playerTransform = playerHealth.transform;
@@ -168,14 +184,35 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
             characterController.enabled = false;
         }
 
-        playerTransform.SetPositionAndRotation(spawnPosition, Quaternion.identity);
+        playerTransform.SetPositionAndRotation(spawnPosition, spawnRotation);
 
         if(characterController != null) {
             characterController.enabled = true;
         }
     }
 
-    public void OnInput(NetworkRunner runner, NetworkInput input) { }
+    public void OnInput(NetworkRunner runner, NetworkInput input) {
+        if(_inputs == null) {
+            _inputs = FindLocalStarterAssetsInputs();
+        }
+        if(_inputs == null) {
+            return;
+        }
+        NetworkButtons buttons = default;
+        if(_inputs.jump) {
+            buttons.Set(NetworkPlayerButtons.Jump, true);
+            _inputs.jump = false; // Reset jump input after processing to prevent continuous jumping
+        }
+        if(_inputs.sprint) {
+            buttons.Set(NetworkPlayerButtons.Sprint, true);
+        }
+        NetworkPlayerInputData inputData = new NetworkPlayerInputData {
+            Move = _inputs.move,
+            Look = _inputs.look,
+            Buttons = buttons
+        };
+        input.Set(inputData);
+    }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
     public void OnConnectedToServer(NetworkRunner runner) { }
@@ -186,10 +223,99 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
     public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
     public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
     public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
-    public void OnSceneLoadDone(NetworkRunner runner) { }
+    public void OnSceneLoadDone(NetworkRunner runner) {
+        spawnPoint = FindSpawnPointInLoadedScene();
+
+        if(runner.IsServer) {
+            UpdateSpawnAssignmentsForExistingPlayers(runner);
+        }
+    }
     public void OnSceneLoadStart(NetworkRunner runner) { }
     public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
     public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
+
+    private static StarterAssetsInputs FindLocalStarterAssetsInputs() {
+        StarterAssetsInputs[] inputs = FindObjectsByType<StarterAssetsInputs>(FindObjectsSortMode.None);
+        foreach(StarterAssetsInputs candidate in inputs) {
+            if(candidate == null || !candidate.enabled || !candidate.gameObject.activeInHierarchy) {
+                continue;
+            }
+
+#if ENABLE_INPUT_SYSTEM
+            PlayerInput playerInput = candidate.GetComponent<PlayerInput>();
+            if(playerInput != null && !playerInput.enabled) {
+                continue;
+            }
+#endif
+
+            return candidate;
+        }
+
+        return null;
+    }
+
+    private void ResolveSpawnPose(PlayerRef player, NetworkRunner runner, out Vector3 position, out Quaternion rotation) {
+        Transform resolvedSpawnPoint = ResolveSpawnPoint();
+        if(resolvedSpawnPoint != null) {
+            Vector2 randomOffset = UnityEngine.Random.insideUnitCircle * spawnRadius;
+            Vector3 center = resolvedSpawnPoint.position;
+            position = new Vector3(
+                center.x + randomOffset.x,
+                center.y,
+                center.z + randomOffset.y
+            );
+            rotation = resolvedSpawnPoint.rotation;
+            Debug.Log($"Assigned spawn position near {resolvedSpawnPoint.name} to player {player}");
+            return;
+        }
+
+        position = new Vector3((player.RawEncoded % runner.Config.Simulation.PlayerCount) * 3, 1, 0);
+        rotation = Quaternion.identity;
+        Debug.LogWarning($"No spawn point found in scene. Using fallback spawn position {position} for player {player}");
+    }
+
+    private Transform ResolveSpawnPoint() {
+        Transform loadedSceneSpawnPoint = FindSpawnPointInLoadedScene();
+        if(loadedSceneSpawnPoint != null) {
+            spawnPoint = loadedSceneSpawnPoint;
+            return spawnPoint;
+        }
+
+        return null;
+    }
+
+    private static Transform FindSpawnPointInLoadedScene() {
+        Transform[] transforms = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach(Transform sceneTransform in transforms) {
+            if(sceneTransform == null || !sceneTransform.gameObject.scene.isLoaded) {
+                continue;
+            }
+
+            if(string.Equals(sceneTransform.name, "SpawnPoint", StringComparison.OrdinalIgnoreCase)) {
+                return sceneTransform;
+            }
+        }
+
+        return null;
+    }
+
+    // function to update spawn position and rotation for existing players 
+    // when host load scene
+    private void UpdateSpawnAssignmentsForExistingPlayers(NetworkRunner runner) {
+        foreach(KeyValuePair<PlayerRef, NetworkObject> entry in _spawnedCharacters) {
+            if(entry.Value == null) {
+                continue;
+            }
+            // Recalculate spawn position and rotation for the player 
+            // based on the new scene's spawn points
+            ResolveSpawnPose(entry.Key, runner, out Vector3 position, out Quaternion rotation);
+            _spawnPositions[entry.Key] = position;
+            _spawnRotations[entry.Key] = rotation;
+
+            Transform characterTransform = entry.Value.transform;
+            characterTransform.SetPositionAndRotation(position, rotation);
+        }
+    }
 }

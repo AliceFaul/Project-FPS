@@ -51,7 +51,16 @@ public class GameManager : MonoBehaviour
         if (other.CompareTag(PLAYER_STRING))
         {
             youWinText.GetComponent<TMP_Text>().text = "You win!";
-            other.GetComponentInParent<FirstPersonController>().enabled = false;
+            FusionPlayerController fusionPlayerController = other.GetComponentInParent<FusionPlayerController>();
+            FirstPersonController firstPersonController = other.GetComponentInParent<FirstPersonController>();
+            if (fusionPlayerController != null)
+            {
+                fusionPlayerController.enabled = false;
+            }
+            else if (firstPersonController != null)
+            {
+                firstPersonController.enabled = false;
+            }
             StarterAssetsInputs starterAssetsInputs = FindAnyObjectByType<StarterAssetsInputs>();
             starterAssetsInputs.SetCursorState(false);
             exitButton.SetActive(true);

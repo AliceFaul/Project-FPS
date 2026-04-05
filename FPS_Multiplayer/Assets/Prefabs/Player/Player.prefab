@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3135623977662309716}
-  - component: {fileID: 785001780699749373}
   - component: {fileID: 3932523327278385741}
-  m_Layer: 3
+  - component: {fileID: 785001780699749373}
+  m_Layer: 0
   m_Name: Active weapon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -33,28 +33,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2343107042455149130}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!95 &785001780699749373
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 594313886209904868}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 384feff50b347744d8e423b3d1c997dc, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!114 &3932523327278385741
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -88,6 +66,28 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   ammoText: {fileID: 0}
+--- !u!95 &785001780699749373
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 594313886209904868}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 384feff50b347744d8e423b3d1c997dc, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &1037704445733155402
 GameObject:
   m_ObjectHideFlags: 0
@@ -107,7 +107,9 @@ GameObject:
   - component: {fileID: 8130565372713198069}
   - component: {fileID: 1618176570684372503}
   - component: {fileID: 1789448726504012015}
-  m_Layer: 3
+  - component: {fileID: 7330214119962692694}
+  - component: {fileID: 5272445575765710514}
+  m_Layer: 0
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -163,7 +165,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1037704445733155402}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 55919ac34a26952479f3fc91f777b2fa, type: 3}
   m_Name: 
@@ -357,6 +359,7 @@ MonoBehaviour:
   - {fileID: 0}
   gameOverContainer: {fileID: 0}
   globalVolume: {fileID: 0}
+  respawnDelay: 2
 --- !u!114 &7829634896877739932
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -408,6 +411,8 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 1789448726504012015}
+  - {fileID: 7330214119962692694}
+  - {fileID: 5272445575765710514}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &1789448726504012015
 MonoBehaviour:
@@ -426,6 +431,74 @@ MonoBehaviour:
   weaponCamera: {fileID: 6695616348851039383}
   weaponCameraTransform: {fileID: 0}
   cameraTarget: {fileID: 0}
+  fusionPlayerController: {fileID: 5272445575765710514}
+  firstPersonController: {fileID: 1033429878647336823}
+  playerInput: {fileID: 0}
+  localOnlyObjects:
+  - {fileID: 2683760635097298139}
+  remoteOnlyObjects: []
+  localOnlyBehaviours:
+  - {fileID: 3932523327278385741}
+  - {fileID: 8195923042279275202}
+--- !u!114 &7330214119962692694
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1037704445733155402}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 378411a89480da345945c2f888327a2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  gravity: -20
+  jumpImpulse: 8
+  acceleration: 10
+  braking: 10
+  maxSpeed: 2
+  rotationSpeed: 15
+--- !u!114 &5272445575765710514
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1037704445733155402}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fceafa59eec37b4187eff891249c3ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveSpeed: 4
+  sprintSpeed: 7
+  rotationSpeed: 3
+  speedChangeRate: 45
+  jumpHeight: 1.2
+  gravity: -15
+  grounded: 1
+  groundedOffset: -0.14
+  groundedRadius: 0.5
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 1
+  cinemachineCameraTarget: {fileID: 2683760635097298139}
+  topClamp: 89
+  bottomClamp: -89
+  enableHeadBob: 1
+  bobFrequency: 11.5
+  bobHorizontalAmplitude: 0.035
+  bobVerticalAmplitude: 0.05
+  bobSprintMultiplier: 1.6
+  bobReturnSpeed: 14
+  bobSmoothness: 20
+  enableLookSway: 1
+  swayAmount: 2.2
+  swaySmoothness: 12
+  enableLandingBump: 1
+  landingBumpAmount: 0.045
+  landingBumpRecoverSpeed: 10
 --- !u!1 &1522224465426003917
 GameObject:
   m_ObjectHideFlags: 0
@@ -437,7 +510,7 @@ GameObject:
   - component: {fileID: 6075034557155124486}
   - component: {fileID: 4393700732993558916}
   - component: {fileID: 992468669043944532}
-  m_Layer: 3
+  m_Layer: 0
   m_Name: Capsule
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -521,7 +594,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2343107042455149130}
-  m_Layer: 3
+  m_Layer: 0
   m_Name: PlayerCameraRoot
   m_TagString: CinemachineTarget
   m_Icon: {fileID: 0}
@@ -556,7 +629,7 @@ GameObject:
   - component: {fileID: 4187820345976527462}
   - component: {fileID: 6695616348851039383}
   - component: {fileID: 7081352686356231227}
-  m_Layer: 3
+  m_Layer: 0
   m_Name: Weapon camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
