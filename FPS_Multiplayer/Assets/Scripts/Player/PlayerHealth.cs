@@ -1,167 +1,386 @@
-using System;
+using Fusion;
 using StarterAssets;
-using System.Collections;
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
-using Unity.Cinemachine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
-public class PlayerHealth : MonoBehaviour
-{
+public class PlayerHealth : NetworkBehaviour {
     [Range(2, 10)]
-    [SerializeField] int startHealth = 10;
-    [SerializeField] CinemachineVirtualCamera deathVirtualCamera;
-    [SerializeField] Transform weaponCamera;
-    [SerializeField] Image[] shieldBars;
-    [SerializeField] GameObject gameOverContainer;
-    [SerializeField] Volume globalVolume;
-    [SerializeField] float respawnDelay = 2f;
+    [SerializeField] private int startHealth = 10;
+    [SerializeField] private CinemachineVirtualCamera deathVirtualCamera;
+    [SerializeField] private Transform weaponCamera;
+    [SerializeField] private Image[] shieldBars;
+    [SerializeField] private GameObject gameOverContainer;
+    [SerializeField] private Volume globalVolume;
+    [SerializeField] private float respawnDelay = 2f;
 
-    static int loadedHealth;
+    [Header("Damage Flash")]
+    [SerializeField] private Renderer[] damageFlashRenderers;
+    [SerializeField] private Color damageFlashColor = new(1f, 0.25f, 0.25f, 1f);
+    [SerializeField] [Range(0f, 1f)] private float damageFlashStrength = 0.85f;
+    [SerializeField] private float damageFlashDuration = 0.12f;
 
-    int currentHealth;
-    // int gameOverVCPriority = 20;
+    [Networked] private int NetworkHealth { get; set; }
+    [Networked] private TickTimer RespawnTimer { get; set; }
+    [Networked] private TickTimer DamageFlashTimer { get; set; }
 
-    public int CurrentHealth => currentHealth;
+    private static int loadedHealth;
+
+    private StarterAssetsInputs _starterAssetsInputs;
+#if ENABLE_INPUT_SYSTEM
+    private PlayerInput _playerInput;
+#endif
+    private RendererFlashState[] _flashStates;
+    private MaterialPropertyBlock _propertyBlock;
+    private int _lastRenderedHealth = -1;
+    private bool _isInitialized;
+    private bool _localDeathStateApplied;
+
+    public int CurrentHealth => GetDisplayHealth();
     public int StartHealth => startHealth;
 
-    private bool _isInitialized = false;
-    private bool _isRespawning = false;
+    private struct RendererFlashState
+    {
+        public Renderer Renderer;
+        public string ColorProperty;
+        public Color BaseColor;
+    }
 
-    // void Awake()
-    // {
-    //     if(loadedHealth == 0) currentHealth = startHealth;
-    //     else currentHealth = loadedHealth;
-    //     AdjustShieldUI();
-    // }
+    public override void Spawned()
+    {
+        CacheComponents();
+        CacheDamageFlashRenderers();
 
-    // Initialize is called from PlayerNetworkSetup when the player spawns in, 
-    // to set up references to the UI and cameras, 
-    // and to set the player's health based on loadedHealth or startHealth.
+        if (Object.HasStateAuthority && NetworkHealth <= 0)
+        {
+            NetworkHealth = GetFallbackHealth();
+        }
+
+        _lastRenderedHealth = -1;
+        ApplyDamageFlash(false);
+    }
+
+    public override void FixedUpdateNetwork()
+    {
+        if (!Object.HasStateAuthority)
+        {
+            return;
+        }
+
+        if (RespawnTimer.Expired(Runner))
+        {
+            RespawnTimer = TickTimer.None;
+            DamageFlashTimer = TickTimer.None;
+            NetworkHealth = startHealth;
+
+            NetworkRunnerManager runnerManager = FindFirstObjectByType<NetworkRunnerManager>();
+            if (runnerManager != null)
+            {
+                runnerManager.RespawnPlayer(this);
+            }
+        }
+    }
+
+    public override void Render()
+    {
+        int displayedHealth = GetDisplayHealth();
+
+        if (_lastRenderedHealth != displayedHealth)
+        {
+            ApplyHealthVisuals(displayedHealth);
+            _lastRenderedHealth = displayedHealth;
+        }
+
+        bool isRespawning = Runner != null && RespawnTimer.IsRunning && !RespawnTimer.ExpiredOrNotRunning(Runner);
+        ApplyLocalDeathState(Object != null && Object.HasInputAuthority && isRespawning && NetworkHealth <= 0);
+        ApplyDamageFlash(Runner != null && DamageFlashTimer.IsRunning && !DamageFlashTimer.ExpiredOrNotRunning(Runner));
+    }
+
     public void Initialize(
-        CinemachineVirtualCamera deathVirtualCamera, 
+        CinemachineVirtualCamera deathVirtualCamera,
         Transform weaponCamera,
         Image[] shieldBars,
         GameObject gameOverContainer,
-        Volume globalVolume) 
+        Volume globalVolume)
     {
         this.deathVirtualCamera = deathVirtualCamera;
         this.weaponCamera = weaponCamera;
         this.shieldBars = shieldBars;
         this.gameOverContainer = gameOverContainer;
         this.globalVolume = globalVolume;
-        if(loadedHealth == 0) currentHealth = startHealth;
-        else currentHealth = loadedHealth;
-        AdjustShieldUI();
+
+        CacheComponents();
+        CacheDamageFlashRenderers();
+
         _isInitialized = true;
+        ApplyHealthVisuals(GetDisplayHealth());
     }
 
     public void AdjustHealth(int amount)
     {
-        if (!_isInitialized || _isRespawning) {
+        if (amount == 0)
+        {
             return;
         }
 
-        currentHealth += amount;
-        currentHealth = Mathf.Clamp(currentHealth, 0, startHealth);
-        AdjustShieldUI();
-        globalVolume.profile.TryGet(out ChromaticAberration chromaticAberration);
-        float chromaticModifier = 1 - currentHealth / (float)startHealth;
-        chromaticAberration.intensity.value = chromaticModifier;
-        if (currentHealth <= 0)
+        if (Runner == null || Object == null)
         {
-            StartCoroutine(RespawnRoutine());
+            return;
         }
+
+        if (Object.HasStateAuthority)
+        {
+            ApplyHealthChange(amount);
+            return;
+        }
+
+        RPC_RequestHealthChange(amount);
     }
 
-    IEnumerator RespawnRoutine()
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_RequestHealthChange(int amount)
     {
-        _isRespawning = true;
-
-        FirstPersonController firstPersonController = GetComponent<FirstPersonController>();
-        FusionPlayerController fusionPlayerController = GetComponent<FusionPlayerController>();
-        CharacterController characterController = GetComponent<CharacterController>();
-        StarterAssetsInputs starterAssetsInputs = GetComponent<StarterAssetsInputs>();
-        NetworkRunnerManager runnerManager = FindFirstObjectByType<NetworkRunnerManager>();
-
-        if (fusionPlayerController != null) {
-            fusionPlayerController.enabled = false;
-        } else if (firstPersonController != null) {
-            firstPersonController.enabled = false;
-        }
-
-        if (characterController != null) {
-            characterController.enabled = false;
-        }
-
-        if (weaponCamera != null) {
-            weaponCamera.gameObject.SetActive(false);
-        }
-
-        if (gameOverContainer != null) {
-            gameOverContainer.SetActive(true);
-        }
-
-        if (starterAssetsInputs != null) {
-            starterAssetsInputs.SetCursorState(false);
-        }
-
-        yield return new WaitForSeconds(respawnDelay);
-
-        if (runnerManager != null) {
-            runnerManager.RespawnPlayer(this);
-        }
-
-        currentHealth = startHealth;
-        AdjustShieldUI();
-
-        if (globalVolume != null && globalVolume.profile.TryGet(out ChromaticAberration chromaticAberration)) {
-            chromaticAberration.intensity.value = 0f;
-        }
-
-        if (gameOverContainer != null) {
-            gameOverContainer.SetActive(false);
-        }
-
-        if (weaponCamera != null) {
-            weaponCamera.gameObject.SetActive(true);
-        }
-
-        if (characterController != null) {
-            characterController.enabled = true;
-        }
-
-        if (fusionPlayerController != null) {
-            fusionPlayerController.enabled = true;
-        } else if (firstPersonController != null) {
-            firstPersonController.enabled = true;
-        }
-
-        if (starterAssetsInputs != null) {
-            starterAssetsInputs.SetCursorState(true);
-        }
-
-        _isRespawning = false;
-    }
-
-    void AdjustShieldUI()
-    {
-        for (int i = 0; i < shieldBars.Length; i++)
-        {
-            if (i < currentHealth)
-            {
-                shieldBars[i].enabled = true;
-            }
-            else
-            {
-                shieldBars[i].enabled = false;
-            }
-        }
+        ApplyHealthChange(amount);
     }
 
     public void LoadHealth()
     {
-        loadedHealth = currentHealth;
+        loadedHealth = CurrentHealth <= 0 ? startHealth : CurrentHealth;
+    }
+
+    private void ApplyHealthChange(int amount)
+    {
+        if (RespawnTimer.IsRunning)
+        {
+            return;
+        }
+
+        int nextHealth = Mathf.Clamp(NetworkHealth + amount, 0, startHealth);
+
+        if (nextHealth == NetworkHealth)
+        {
+            return;
+        }
+
+        NetworkHealth = nextHealth;
+
+        if (amount < 0)
+        {
+            DamageFlashTimer = TickTimer.CreateFromSeconds(Runner, damageFlashDuration);
+        }
+
+        if (NetworkHealth <= 0)
+        {
+            RespawnTimer = TickTimer.CreateFromSeconds(Runner, respawnDelay);
+        }
+    }
+
+    private int GetDisplayHealth()
+    {
+        if (Runner == null || Object == null)
+        {
+            return GetFallbackHealth();
+        }
+
+        if (NetworkHealth <= 0 && !RespawnTimer.IsRunning)
+        {
+            return GetFallbackHealth();
+        }
+
+        return NetworkHealth;
+    }
+
+    private int GetFallbackHealth()
+    {
+        if (loadedHealth <= 0)
+        {
+            return startHealth;
+        }
+
+        return Mathf.Clamp(loadedHealth, 0, startHealth);
+    }
+
+    private void CacheComponents()
+    {
+        if (_starterAssetsInputs == null)
+        {
+            _starterAssetsInputs = GetComponent<StarterAssetsInputs>();
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        if (_playerInput == null)
+        {
+            _playerInput = GetComponent<PlayerInput>();
+        }
+#endif
+    }
+
+    private void ApplyHealthVisuals(int currentHealth)
+    {
+        if (!_isInitialized || !Object.HasInputAuthority)
+        {
+            return;
+        }
+
+        AdjustShieldUI(currentHealth);
+
+        if (globalVolume != null &&
+            globalVolume.profile != null &&
+            globalVolume.profile.TryGet(out ChromaticAberration chromaticAberration))
+        {
+            float chromaticModifier = 1f - currentHealth / (float)startHealth;
+            chromaticAberration.intensity.value = chromaticModifier;
+        }
+    }
+
+    private void ApplyLocalDeathState(bool shouldApply)
+    {
+        if (!_isInitialized || Object == null || !Object.HasInputAuthority || _localDeathStateApplied == shouldApply)
+        {
+            return;
+        }
+
+        if (shouldApply)
+        {
+            ClearLocalInputState();
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        if (_playerInput != null)
+        {
+            _playerInput.enabled = !shouldApply;
+        }
+#endif
+
+        if (weaponCamera != null)
+        {
+            weaponCamera.gameObject.SetActive(!shouldApply);
+        }
+
+        if (gameOverContainer != null)
+        {
+            gameOverContainer.SetActive(shouldApply);
+        }
+
+        if (_starterAssetsInputs != null)
+        {
+            _starterAssetsInputs.SetCursorState(!shouldApply);
+        }
+
+        _localDeathStateApplied = shouldApply;
+    }
+
+    private void ClearLocalInputState()
+    {
+        if (_starterAssetsInputs == null)
+        {
+            return;
+        }
+
+        _starterAssetsInputs.MoveInput(Vector2.zero);
+        _starterAssetsInputs.LookInput(Vector2.zero);
+        _starterAssetsInputs.JumpInput(false);
+        _starterAssetsInputs.SprintInput(false);
+        _starterAssetsInputs.ShootInput(false);
+        _starterAssetsInputs.ZoomInput(false);
+    }
+
+    private void AdjustShieldUI(int currentHealth)
+    {
+        if (shieldBars == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < shieldBars.Length; i++)
+        {
+            if (shieldBars[i] == null)
+            {
+                continue;
+            }
+
+            shieldBars[i].enabled = i < currentHealth;
+        }
+    }
+
+    private void CacheDamageFlashRenderers()
+    {
+        if (damageFlashRenderers == null || damageFlashRenderers.Length == 0)
+        {
+            Transform firstPersonRoot = transform.Find("PlayerCameraRoot");
+            Renderer[] allRenderers = GetComponentsInChildren<Renderer>(true);
+            System.Collections.Generic.List<Renderer> rendererList = new();
+
+            foreach (Renderer candidate in allRenderers)
+            {
+                if (candidate == null)
+                {
+                    continue;
+                }
+
+                if (firstPersonRoot != null && candidate.transform.IsChildOf(firstPersonRoot))
+                {
+                    continue;
+                }
+
+                rendererList.Add(candidate);
+            }
+
+            damageFlashRenderers = rendererList.ToArray();
+        }
+
+        _flashStates = new RendererFlashState[damageFlashRenderers.Length];
+        _propertyBlock = new MaterialPropertyBlock();
+
+        for (int i = 0; i < damageFlashRenderers.Length; i++)
+        {
+            Renderer renderer = damageFlashRenderers[i];
+            if (renderer == null || renderer.sharedMaterial == null)
+            {
+                continue;
+            }
+
+            string colorProperty = renderer.sharedMaterial.HasProperty("_BaseColor") ? "_BaseColor" : "_Color";
+            Color baseColor = renderer.sharedMaterial.HasProperty(colorProperty)
+                ? renderer.sharedMaterial.GetColor(colorProperty)
+                : Color.white;
+
+            _flashStates[i] = new RendererFlashState
+            {
+                Renderer = renderer,
+                ColorProperty = colorProperty,
+                BaseColor = baseColor
+            };
+        }
+    }
+
+    private void ApplyDamageFlash(bool flashActive)
+    {
+        if (_flashStates == null || _propertyBlock == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < _flashStates.Length; i++)
+        {
+            RendererFlashState state = _flashStates[i];
+            if (state.Renderer == null || string.IsNullOrEmpty(state.ColorProperty))
+            {
+                continue;
+            }
+
+            Color targetColor = flashActive
+                ? Color.Lerp(state.BaseColor, damageFlashColor, damageFlashStrength)
+                : state.BaseColor;
+
+            state.Renderer.GetPropertyBlock(_propertyBlock);
+            _propertyBlock.SetColor(state.ColorProperty, targetColor);
+            state.Renderer.SetPropertyBlock(_propertyBlock);
+        }
     }
 }

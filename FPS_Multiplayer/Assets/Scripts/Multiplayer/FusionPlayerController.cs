@@ -59,6 +59,7 @@ public class FusionPlayerController : NetworkBehaviour {
     [SerializeField] private float landingBumpAmount = 0.05f;
     [SerializeField] private float landingBumpRecoverSpeed = 8f;
 
+    [Networked] private float PrevYaw { get; set; }
     [Networked] private float Yaw { get; set; }
     [Networked] private NetworkButtons PreviousButtons { get; set; }
 
@@ -131,7 +132,11 @@ public class FusionPlayerController : NetworkBehaviour {
             }
 
             if(Object.HasStateAuthority) {
-                _rotationVelocity = inputData.Look.x * rotationSpeed;
+                float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1f : Runner.DeltaTime;
+                PrevYaw = Yaw;
+                // If Keyboard & Mouse will not multiply with deltaTime
+                // else Gamepad/rightStick multiply with Runner.DeltaTime
+                _rotationVelocity = inputData.Look.x * rotationSpeed * deltaTimeMultiplier;
                 Yaw += _rotationVelocity;
                 transform.rotation = Quaternion.Euler(0f, Yaw, 0f);
                 _speed = inputData.Buttons.IsSet(NetworkPlayerButtons.Sprint) ? sprintSpeed : moveSpeed;
@@ -157,7 +162,10 @@ public class FusionPlayerController : NetworkBehaviour {
         if(Object != null && Object.HasInputAuthority) {
             CameraRotation(_cachedLookInput);
         } else {
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0f, Yaw, 0f), 20f * Runner.DeltaTime);
+            float alpha = Runner.LocalAlpha;
+            float interpolatedYaw = Mathf.LerpAngle(PrevYaw, Yaw, alpha);
+            // transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0f, Yaw, 0f), 20f * Runner.DeltaTime);
+            transform.rotation = Quaternion.Euler(0f, interpolatedYaw, 0f);
         }
     }
 

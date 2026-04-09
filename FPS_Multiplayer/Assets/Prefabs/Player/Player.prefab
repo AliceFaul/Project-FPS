@@ -360,6 +360,10 @@ MonoBehaviour:
   gameOverContainer: {fileID: 0}
   globalVolume: {fileID: 0}
   respawnDelay: 2
+  damageFlashRenderers: []
+  damageFlashColor: {r: 1, g: 0.25, b: 0.25, a: 1}
+  damageFlashStrength: 0.85
+  damageFlashDuration: 0.12
 --- !u!114 &7829634896877739932
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -410,6 +414,7 @@ MonoBehaviour:
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
+  - {fileID: 8040993034636308884}
   - {fileID: 1789448726504012015}
   - {fileID: 7330214119962692694}
   - {fileID: 5272445575765710514}
