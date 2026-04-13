@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using StarterAssets;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -21,6 +21,7 @@ public class PlayerHealth : MonoBehaviour
     int currentHealth;
     // int gameOverVCPriority = 20;
 
+    string lastAttacker = "";
     public int CurrentHealth => currentHealth;
     public int StartHealth => startHealth;
 
@@ -46,13 +47,44 @@ public class PlayerHealth : MonoBehaviour
 
     void PlayerGameOver()
     {
-        weaponCamera.parent = null;
-        //deathVirtualCamera.Priority = gameOverVCPriority;
-        gameOverContainer.SetActive(true);
+        //  tên người chết
+        string victimName = gameObject.name;
+
+        //  KILL FEED
+        if (KillFeedManager.Instance != null)
+        {
+            KillFeedManager.Instance.AddKill(lastAttacker, victimName);
+        }
+
+        // 🏆 LEADERBOARD
+        if (LeaderboardManager.Instance != null)
+        {
+            LeaderboardManager.Instance.AddKill(lastAttacker, victimName);
+        }
+
+        //  tách camera
+        if (weaponCamera != null)
+        {
+            weaponCamera.parent = null;
+        }
+
+        //  UI game over
+        if (gameOverContainer != null)
+        {
+            gameOverContainer.SetActive(true);
+        }
+
+        //  mở chuột
         StarterAssetsInputs starterAssetsInputs = FindAnyObjectByType<StarterAssetsInputs>();
-        starterAssetsInputs.SetCursorState(false);
+        if (starterAssetsInputs != null)
+        {
+            starterAssetsInputs.SetCursorState(false);
+        }
+
+        //  xoá player
         Destroy(gameObject);
     }
+
 
     void AdjustShieldUI()
     {
@@ -72,5 +104,10 @@ public class PlayerHealth : MonoBehaviour
     public void LoadHealth()
     {
         loadedHealth = currentHealth;
+    }
+
+    public void SetLastAttacker(string attacker)
+    {
+        lastAttacker = attacker;
     }
 }
