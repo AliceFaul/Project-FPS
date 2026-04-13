@@ -25,6 +25,7 @@ public class ActiveWeapon : MonoBehaviour
     Animator animator;
     FirstPersonController firstPersonController;
     StarterAssetsInputs starterAssetsInputs;
+    PlayerNetworkSetup playerNetworkSetup;
     Vector3 weaponIconSizeMod = new(1.3f, 1.3f, 1.3f);
     Weapon currentWeapon;
 
@@ -51,29 +52,10 @@ public class ActiveWeapon : MonoBehaviour
     {
         starterAssetsInputs = GetComponentInParent<StarterAssetsInputs>();
         animator = GetComponent<Animator>();
-        // defaultFOV = playerFollowCam.m_Lens.FieldOfView;
         firstPersonController = GetComponentInParent<FirstPersonController>();
-        // defaultZoomRotationSpeed = firstPersonController.RotationSpeed;
-
-        // for (int i = 0; i < weaponList.Length; i++)
-        // {
-        //     weaponList[i].PickedUp = weaponsPickedUp[i];
-        //     weaponList[i].MagazineSize = maxAmmoList[i];
-        // }
-
-        // foreach(GameObject icon in weaponIcons)
-        // {
-        //     icon.SetActive(false);
-        // }
-
-        // if(checkpointAmmoList != null) currentAmmoList = checkpointAmmoList;
-        // if(CheckpointWeaponsPickedUp != null) weaponsPickedUp = CheckpointWeaponsPickedUp;
+        playerNetworkSetup = GetComponentInParent<PlayerNetworkSetup>();
     }
 
-    // Initialize is called in PlayerNetworkSetup 
-    // when the player spawns in, to set up the weapon system with the correct references and values. 
-    // This is necessary because the player object is not active at the start of the scene, 
-    // so Awake cannot be used to set up these references and values.
     public void Initialize(
         Camera weaponCam, 
         CinemachineVirtualCamera playerFollowCam, 
@@ -114,15 +96,6 @@ public class ActiveWeapon : MonoBehaviour
         isInitialized = true;
     }
 
-    // void Start()
-    // {
-    //     SwitchWeapon(startingWeaponSO);
-    //     for (int i = 0; i < weaponList.Length; i++)
-    //     {
-    //         if (weaponList[i].PickedUp) weaponIcons[i].SetActive(true);
-    //     }
-    // }
-
     void Update()
     {
         if(!isInitialized) return;
@@ -162,7 +135,7 @@ public class ActiveWeapon : MonoBehaviour
         if (coolDown >= currentWeaponSO.FireRate && currentAmmo > 0)
         {
             coolDown = 0f;
-            currentWeapon.Shoot(currentWeaponSO);
+            currentWeapon.Shoot(currentWeaponSO, playerNetworkSetup);
             animator.Play(currentWeaponSO.shootString, 0, 0f);
             AdjustAmmo(-1);
         }
@@ -262,5 +235,4 @@ public class ActiveWeapon : MonoBehaviour
             maxAmmoList[i] = (int)Mathf.Ceil(weaponList[i].MagazineSize * 1.25f);
         }
     }
-
 }

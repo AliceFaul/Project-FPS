@@ -132,11 +132,10 @@ public class FusionPlayerController : NetworkBehaviour {
             }
 
             if(Object.HasStateAuthority) {
-                float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1f : Runner.DeltaTime;
                 PrevYaw = Yaw;
                 // If Keyboard & Mouse will not multiply with deltaTime
                 // else Gamepad/rightStick multiply with Runner.DeltaTime
-                _rotationVelocity = inputData.Look.x * rotationSpeed * deltaTimeMultiplier;
+                _rotationVelocity = inputData.Look.x * rotationSpeed;
                 Yaw += _rotationVelocity;
                 transform.rotation = Quaternion.Euler(0f, Yaw, 0f);
                 _speed = inputData.Buttons.IsSet(NetworkPlayerButtons.Sprint) ? sprintSpeed : moveSpeed;

@@ -12,9 +12,6 @@ public class Rocket : MonoBehaviour
     
     Rigidbody rb;
 
-    const string PLAYER_STRING = "Player";
-    const string ENEMY_STRING = "Enemy";
-
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -32,18 +29,27 @@ public class Rocket : MonoBehaviour
         Collider[] hitColliders = Physics.OverlapSphere(transform.position, radius);
         foreach (Collider hitCollider in hitColliders)
         {
-            Debug.Log(hitCollider.gameObject.name);
-            if (hitCollider.CompareTag(PLAYER_STRING) && !hitCollider.isTrigger)
+            if (hitCollider.isTrigger)
             {
-                hitCollider.GetComponentInParent<PlayerHealth>().AdjustHealth(-damage / playerDamageModifier);
+                continue;
             }
-            else if (hitCollider.CompareTag(ENEMY_STRING) && !hitCollider.isTrigger)
+
+            PlayerHealth playerHealth = hitCollider.GetComponentInParent<PlayerHealth>();
+            if (playerHealth != null && playerHealth.transform.root != transform.root)
             {
-                hitCollider.GetComponentInParent<EnemyHealth>().TakeDamage(damage);
+                playerHealth.AdjustHealth(-damage / playerDamageModifier);
+                continue;
+            }
+
+            EnemyHealth enemyHealth = hitCollider.GetComponentInParent<EnemyHealth>();
+            if (enemyHealth != null)
+            {
+                enemyHealth.TakeDamage(damage);
             }
         }
-        Instantiate(explosionFX,transform.position,Quaternion.identity);
-        SoundFXManager.instance.PlaySoundFX(explosionClip,transform);
+
+        Instantiate(explosionFX, transform.position, Quaternion.identity);
+        SoundFXManager.instance.PlaySoundFX(explosionClip, transform);
         Destroy(gameObject);
     }
 }

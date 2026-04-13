@@ -361,6 +361,7 @@ MonoBehaviour:
   globalVolume: {fileID: 0}
   respawnDelay: 2
   damageFlashRenderers: []
+  debugHealthStep: 1
   damageFlashColor: {r: 1, g: 0.25, b: 0.25, a: 1}
   damageFlashStrength: 0.85
   damageFlashDuration: 0.12
@@ -445,6 +446,17 @@ MonoBehaviour:
   localOnlyBehaviours:
   - {fileID: 3932523327278385741}
   - {fileID: 8195923042279275202}
+  enableRemoteShotFx: 1
+  remoteShotDistance: 100
+  remoteTracerDuration: 0.06
+  remoteTracerWidth: 0.035
+  remoteTracerColor: {r: 0.5657586, g: 0.9924528, b: 0.2902455, a: 0.9}
+  remoteMuzzleFlashPrefab: {fileID: 0}
+  remoteMuzzleFlashLifetime: 0.18
+  remoteMuzzleFlashForwardOffset: 0.12
+  remoteImpactVfxPrefab: {fileID: 4119116250391436092, guid: 9c821fce74a238e44b880189d86a1928, type: 3}
+  remoteImpactVfxLifetime: 1.2
+  remoteImpactOffset: 0.03
 --- !u!114 &7330214119962692694
 MonoBehaviour:
   m_ObjectHideFlags: 0
