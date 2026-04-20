@@ -1,8 +1,7 @@
 using UnityEngine;
+using Fusion;
 
-public class EnemyHealth : MonoBehaviour
-{
-    
+public class EnemyHealth : NetworkBehaviour {
     [SerializeField] GameObject[] ammoDrop;
     [SerializeField] GameObject healthDrop;
     [SerializeField] GameObject smallExplosionFX;
@@ -15,15 +14,26 @@ public class EnemyHealth : MonoBehaviour
     Vector3 dropSpawnPos;
     float currentHealth;
 
-    void Awake()
-    {
-        currentHealth = startHealth;
+    private bool isDead = false;
+
+    [Networked] public float NetworkHealth { get; set; }
+
+    public override void Spawned() {
+        if(Object.HasStateAuthority) {
+            NetworkHealth = startHealth;
+        }
     }
 
     public void Init(GameManager gameManager)
     {
+        if(gameManager == null) {
+            Debug.LogError("[EnemyHealth.Init()]: GameManager is null");
+            return;       
+        }
         this.gameManager = gameManager;
-        this.gameManager.AdjustEnemiesLeft(1);
+        if(Object.HasStateAuthority) {
+            this.gameManager.AdjustEnemiesLeft(1);
+        }
     }
 
     public void Init(GameManager gameManager, SpawnGate parentGate)
@@ -32,33 +42,51 @@ public class EnemyHealth : MonoBehaviour
         this.parentGate = parentGate;
     }
 
-    public void TakeDamage(float amount)
-    {
-        currentHealth -= amount;
-        if (currentHealth <= 0)
-        {
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_TakeDamage(float amount) {
+        TakeDamage(amount);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RPC_PlayExplosionFX(Vector3 position) {
+        Instantiate(smallExplosionFX, position, Quaternion.identity);
+    }
+
+    public void TakeDamage(float amount) {
+        float nextHealth = Mathf.Clamp(NetworkHealth + amount, 0, startHealth);
+        if(nextHealth == NetworkHealth) {
+            return;
+        }
+        NetworkHealth = nextHealth;
+        if(NetworkHealth <= 0) {
             SelfDestruct();
         }
     }
 
     public void SelfDestruct()
     {
+        if(isDead) {
+            return;
+        }
+        isDead = true;
+        if(!Object.HasStateAuthority) {
+            return;
+        }
+        dropSpawnPos = Vector3.zero; // reset drop pos
         gameManager.AdjustEnemiesLeft(-1);
-        if (Random.value < chance4drop)
-        {
+        // Play fx in all player
+        RPC_PlayExplosionFX(transform.position);
+        // Spawn drop item by network
+        if(Random.value < chance4drop) {
             dropSpawnPos = transform.position - new Vector3(0, .5f, 0);
-            if (Random.value > chance4ammoDrop)
-            {
-                Instantiate(healthDrop, dropSpawnPos, Quaternion.identity);
-            }
-            else
-            {
+            if(Random.value > chance4ammoDrop && Runner != null) {
+                Runner.Spawn(healthDrop, dropSpawnPos, Quaternion.identity);
+            } else {
                 int lootNr = Random.Range(0, ammoDrop.Length);
-                Instantiate(ammoDrop[lootNr], dropSpawnPos, Quaternion.identity);
+                Runner.Spawn(ammoDrop[lootNr], dropSpawnPos, Quaternion.identity);
             }
         }
-        Instantiate(smallExplosionFX,transform.position,Quaternion.identity);
         parentGate?.ChildRobotDestroyed();
-        Destroy(gameObject);
+        Runner.Despawn(Object);
     }
 }

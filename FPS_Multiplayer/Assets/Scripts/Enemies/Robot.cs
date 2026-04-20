@@ -1,9 +1,9 @@
 using System.Collections;
+using Fusion;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class Robot : MonoBehaviour
-{
+public class Robot : NetworkBehaviour {
     [SerializeField] GameObject robotExplosionVFX;
     [SerializeField] AudioClip explosionTimerClip;
     [SerializeField] bool isSpawnedByGate = true;
@@ -15,55 +15,98 @@ public class Robot : MonoBehaviour
     NavMeshAgent agent;
     GameManager gameManager;
 
+    private float targetUpdateTimer = 0f;
+    private float targetUpdateInterval = 0.5f;
+
     bool initializedSelfDestruct = false;
 
     const string PLAYER_STRING = "Player";
 
-    void Awake()
-    {
+    private void Awake() {
         agent = GetComponent<NavMeshAgent>();
     }
 
-    void Start()
-    {
-        if (!isSpawnedByGate)
-        {
-            player = FindFirstObjectByType<PlayerHealth>();
-            gameManager = FindFirstObjectByType<GameManager>();
-            GetComponent<EnemyHealth>().Init(gameManager);
+    public override void Spawned() {
+        if(!Object.HasStateAuthority) {
+            agent.enabled = false;
+        } else {
+            agent.updatePosition = true;
+            agent.updateRotation = true;
         }
     }
 
-    void Update()
-    {
-        if (!player) return;
+    public override void FixedUpdateNetwork() {
+        if(!Object.HasStateAuthority) {
+            return;
+        }
+        targetUpdateTimer += Runner.DeltaTime;
+        if(targetUpdateTimer >= targetUpdateInterval) {
+            player = GetClosestPlayer();
+            targetUpdateTimer = 0f;
+        }
+        if(player == null) {
+            return;
+        }
         agent.SetDestination(player.transform.position);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RPC_SpawnExplosionFX(Vector3 position) {
+        Instantiate(robotExplosionVFX, position, Quaternion.identity);
     }
 
     public void Init(PlayerHealth player, GameManager gameManager, SpawnGate parentGate)
     {
+        if(!Object.HasStateAuthority) return;
         this.parentGate = parentGate;
         this.player = player;
         this.gameManager = gameManager;
         GetComponent<EnemyHealth>().Init(gameManager, parentGate);
     }
 
-    void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag(PLAYER_STRING) && !initializedSelfDestruct)
-        {
+    private void OnTriggerEnter(Collider other) {
+        if(!Object.HasStateAuthority) {
+            return;
+        }     
+        if(initializedSelfDestruct) {
+            return;
+        }
+        if(other.CompareTag(PLAYER_STRING) && !initializedSelfDestruct) {
             initializedSelfDestruct = true;
             StartCoroutine(SelfDestructRoutine());
         }
     }
 
-    IEnumerator SelfDestructRoutine()
-    {
+    IEnumerator SelfDestructRoutine() {
         EnemyHealth enemyHealth = GetComponent<EnemyHealth>();
         SoundFXManager.instance.PlaySoundFX(explosionTimerClip,transform);
         yield return new WaitForSeconds(explodeTimer);
-        Instantiate(robotExplosionVFX, transform.position, Quaternion.identity);
+        RPC_SpawnExplosionFX(transform.position);
         enemyHealth.SelfDestruct();
+    }
+
+    // function help enemy find a closest player
+    private PlayerHealth GetClosestPlayer() {
+        if(Runner == null) { 
+            return null;
+        }
+        PlayerHealth closest = null;
+        float minDist = Mathf.Infinity;
+
+        foreach(var player in Runner.ActivePlayers) {
+            var obj = Runner.GetPlayerObject(player);
+            if(obj == null) continue;
+            
+            var health = obj.GetComponent<PlayerHealth>();
+            if(health == null) continue;
+            
+            float dist = Vector3.Distance(transform.position, health.transform.position);
+            if(dist < minDist) {
+                minDist = dist;
+                closest = health;
+            }
+        }
+        return closest;
     }
 
     static public void IncreaseExplTimer()

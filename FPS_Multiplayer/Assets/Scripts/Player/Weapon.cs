@@ -93,7 +93,7 @@ public class Weapon : MonoBehaviour
         EnemyHealth enemy = hit.collider.GetComponentInParent<EnemyHealth>();
         if (enemy != null)
         {
-            enemy.TakeDamage(weaponSO.Damage);
+            enemy.RPC_TakeDamage(-Mathf.RoundToInt(weaponSO.Damage));
             return;
         }
 

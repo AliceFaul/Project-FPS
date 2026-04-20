@@ -44,7 +44,7 @@ public class Rocket : MonoBehaviour
             EnemyHealth enemyHealth = hitCollider.GetComponentInParent<EnemyHealth>();
             if (enemyHealth != null)
             {
-                enemyHealth.TakeDamage(damage);
+                enemyHealth.RPC_TakeDamage(-damage);
             }
         }
 

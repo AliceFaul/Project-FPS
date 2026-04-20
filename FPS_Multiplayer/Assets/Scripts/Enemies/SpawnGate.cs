@@ -1,8 +1,8 @@
 using System.Collections;
+using Fusion;
 using UnityEngine;
 
-public class SpawnGate : MonoBehaviour
-{
+public class SpawnGate : NetworkBehaviour {
     [SerializeField] GameObject enemy;
     [SerializeField] AudioClip spawnRobotClip;
     [SerializeField] float enemySpawnInterval = 5f;
@@ -19,7 +19,7 @@ public class SpawnGate : MonoBehaviour
     void Start()
     {
         gameManager = FindFirstObjectByType<GameManager>();
-        GetComponent<EnemyHealth>().Init(gameManager);
+        //GetComponent<EnemyHealth>().Init(gameManager);
         StartCoroutine(SpawnEnemiesCoroutine());
         isActive = false;
     }
@@ -70,13 +70,47 @@ public class SpawnGate : MonoBehaviour
     }
 
     private void SpawnEnemy() {
-        if (enemy == null || player == null || gameManager == null) {
+        if(!Object.HasStateAuthority) {
+            return;
+        }
+        if (enemy == null) {
+            return;
+        }
+        if(player == null) {
+            player = GetClosestPlayer();
+        }
+        if(gameManager == null) { 
+            gameManager = FindFirstObjectByType<GameManager>();
+        }
+        if (player == null || gameManager == null) {
+            Debug.LogError("[SpawnGate]: Missing player or gameManager");
             return;
         }
 
         SoundFXManager.instance.PlaySoundFX(spawnRobotClip, transform);
-        GameObject newEnemy = Instantiate(enemy, transform.position, transform.rotation);
+        var newEnemy = Runner.Spawn(enemy, transform.position, transform.rotation);
         newEnemy.GetComponent<Robot>().Init(player, gameManager, this);
         currentRobotCount++;
+    }
+
+    private PlayerHealth GetClosestPlayer() { 
+        if(Runner == null) { 
+            return null;
+        }
+        PlayerHealth closest = null;
+        float minDist = Mathf.Infinity;
+
+        foreach(var player in Runner.ActivePlayers) {
+            var obj = Runner.GetPlayerObject(player);
+            if(obj == null) continue;
+            var health = obj.GetComponent<PlayerHealth>();
+            if(health == null) continue;
+            float dist = Vector3.Distance(transform.position, health.transform.position);
+            if(dist < minDist) { 
+                minDist = dist;
+                closest = health;
+            }
+        }
+        return closest;
     }
 }

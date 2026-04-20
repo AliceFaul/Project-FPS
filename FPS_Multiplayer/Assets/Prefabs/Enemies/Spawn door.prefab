@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 5262834725313701021}
   - component: {fileID: 6193441449318699105}
   - component: {fileID: 7035561485788566538}
+  - component: {fileID: 1446776436013740528}
   m_Layer: 0
   m_Name: Spawn door
   m_TagString: Untagged
@@ -73,6 +74,7 @@ MonoBehaviour:
   startHealth: 12
   chance4drop: 0.25
   chance4ammoDrop: 0
+  _NetworkHealth: 0
 --- !u!82 &5262834725313701021
 AudioSource:
   m_ObjectHideFlags: 0
@@ -212,6 +214,26 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 50.736355, y: 16.821032, z: 32.053993}
   m_Center: {x: 6.0766354, y: 3.345004, z: 14.256997}
+--- !u!114 &1446776436013740528
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4931199944922465551}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SortKey: 960884608
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 2072679134772458459}
+  - {fileID: 8437327140447608880}
+  ForceRemoteRenderTimeframe: 0
 --- !u!1 &6722132098269516286
 GameObject:
   m_ObjectHideFlags: 0
