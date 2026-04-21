@@ -119,19 +119,30 @@ public class LobbyManager : MonoBehaviour
         characterSelectionPanel.SetActive(true);
 
         if (spawner == null) spawner = FindFirstObjectByType<NetworkRunnerManager>();
+        if(playerNameInput != null) {
+            playerNameInput.text = PlayerNameStorage.GetPlayerName();
+        }
         await spawner.StartLobby();
     }
 
     public void OnNextButton() // Đây chính là hàm chạy khi bấm Confirm
     {
-        var playerName = playerNameInput.text;
-        if (string.IsNullOrEmpty(playerName))
+        if(playerNameInput == null)
+        {
+            return;
+        }
+
+        string playerName = PlayerNameStorage.Sanitize(playerNameInput.text);
+        if(string.IsNullOrEmpty(playerName))
         {
             Debug.LogWarning("Player name cannot be empty!");
             return;
         }
 
-        Debug.Log($"Player Name: {playerName}");
+        PlayerNameStorage.SavePlayerName(playerName);
+        playerNameInput.text = playerName;
+
+        Debug.Log($"Player Name saved: {playerName}");
 
         // --- PHẦN THÊM MỚI ---
         if (confirmMessage != null)
@@ -140,9 +151,12 @@ public class LobbyManager : MonoBehaviour
         }
         // ---------------------
 
-        // Nếu ông muốn bấm Confirm xong nó chuyển sang Lobby luôn thì giữ dòng này:
-        // lobbyPanel.SetActive(true); 
-        // Còn nếu muốn nó ở lại để nhìn thông báo thì comment nó lại.
+        if(characterSelectionPanel != null) {
+            characterSelectionPanel.SetActive(false);
+        }
+        if(lobbyPanel != null) {
+            lobbyPanel.SetActive(true);
+        }
     }
 
     // Hiển thị danh sách phòng (Đã chia làm 2 cột Name | Players cho đẹp)

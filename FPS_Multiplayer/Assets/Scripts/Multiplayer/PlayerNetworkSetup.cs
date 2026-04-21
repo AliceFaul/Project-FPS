@@ -8,6 +8,10 @@ using StarterAssets;
 using UnityEngine.InputSystem;
 #endif
 
+public struct IPlayerMetaData : INetworkStruct {
+    public NetworkString<_16> Name;
+}
+
 public class PlayerNetworkSetup : NetworkBehaviour {
     [Header("Player Components")]
     [SerializeField] private ActiveWeapon activeWeapon;
@@ -42,10 +46,13 @@ public class PlayerNetworkSetup : NetworkBehaviour {
     private static Material _remoteTracerMaterial;
     private ParticleSystem[] _remoteWeaponMuzzleFlashPrefabs;
 
+    [Networked] public NetworkDictionary<PlayerRef, IPlayerMetaData> Players => default;
+
     public override void Spawned() {
         CacheComponents();
         ApplyVisibilityState();
         DisableLegacyControllerIfNeeded();
+        TryPushLocalPlayerMetaData();
 
         if(!Object.HasInputAuthority) {
             if(weaponCamera != null) {
@@ -100,6 +107,40 @@ public class PlayerNetworkSetup : NetworkBehaviour {
         followCam.LookAt = target;
     }
 
+    #region Set Player Data in game
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_UpdatePlayerMetaData(PlayerRef playerRef, IPlayerMetaData metaData) {
+        Players.Set(playerRef, metaData);
+    }
+
+    public void TryPushLocalPlayerMetaData() {
+        if(Runner == null || Object == null || !Object.HasInputAuthority) {
+            return;
+        }
+
+        IPlayerMetaData metaData = default;
+        metaData.Name = PlayerNameStorage.GetPlayerName();
+        RPC_UpdatePlayerMetaData(Object.InputAuthority, metaData);
+    }
+
+    public bool TryGetPlayerMetaData(PlayerRef playerRef, out IPlayerMetaData metaData) {
+        return Players.TryGet(playerRef, out metaData);
+    } 
+
+    public IPlayerMetaData GetLocalPlayerData() { 
+        if(Runner == null) {
+            Debug.LogWarning("[PlayerNetworkSetup] Runner is NULL");
+        } else {
+            var playerRef = Runner.LocalPlayer;
+            if(Players.TryGet(playerRef, out var metaData)) { 
+                return metaData;
+            }
+        }
+        return default;
+    }
+    #endregion
+
+    #region Remote Shoot FX
     public void NotifyShot(int weaponId, Vector3? targetPoint = null, bool spawnImpactVfx = false) {
         if(!enableRemoteShotFx || Runner == null || Object == null) {
             return;
@@ -160,6 +201,7 @@ public class PlayerNetworkSetup : NetworkBehaviour {
         lineRenderer.endColor = new Color(remoteTracerColor.r, remoteTracerColor.g, remoteTracerColor.b, 0f);
         Destroy(tracerObject, remoteTracerDuration);
     }
+    #endregion
 
     private void SpawnRemoteMuzzleFlash(int weaponId, Vector3 position, Quaternion rotation) {
         ParticleSystem weaponMuzzleFlash = GetRemoteWeaponMuzzleFlashPrefab(weaponId);
@@ -238,6 +280,7 @@ public class PlayerNetworkSetup : NetworkBehaviour {
         }
     }
 
+#region Helper method get shot property
     private Vector3 GetShotOrigin() {
         Transform target = cameraTarget != null ? cameraTarget : transform;
         return target.position + target.forward * 0.35f;
@@ -260,6 +303,7 @@ public class PlayerNetworkSetup : NetworkBehaviour {
 
         return _remoteTracerMaterial;
     }
+#endregion
 
     private void CacheComponents() {
         if(activeWeapon == null) {
@@ -322,6 +366,7 @@ public class PlayerNetworkSetup : NetworkBehaviour {
         }
     }
 
+#region Helper method help player find/set object in game scene
     private static CinemachineVirtualCamera FindSceneCamera(string cameraName) {
         var cameras = FindObjectsByType<CinemachineVirtualCamera>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach(var camera in cameras) {
@@ -370,5 +415,33 @@ public class PlayerNetworkSetup : NetworkBehaviour {
         }
 
         return null;
+    }
+#endregion
+}
+
+public static class PlayerNameStorage {
+    public const string PlayerNamePrefsKey = "PLAYER_NAME";
+    public const string DefaultPlayerName = "Player";
+    public const int MaxPlayerNameLength = 16;
+
+    public static string GetPlayerName() {
+        return Sanitize(PlayerPrefs.GetString(PlayerNamePrefsKey, DefaultPlayerName));
+    }
+
+    public static void SavePlayerName(string playerName) {
+        PlayerPrefs.SetString(PlayerNamePrefsKey, Sanitize(playerName));
+        PlayerPrefs.Save();
+    }
+
+    public static string Sanitize(string playerName) {
+        string resolvedName = string.IsNullOrWhiteSpace(playerName)
+            ? DefaultPlayerName
+            : playerName.Trim();
+
+        if(resolvedName.Length > MaxPlayerNameLength) {
+            resolvedName = resolvedName.Substring(0, MaxPlayerNameLength);
+        }
+
+        return resolvedName;
     }
 }
