@@ -1,8 +1,8 @@
 using System.Collections;
+using Fusion;
 using UnityEngine;
 
-public class SpawnGate : MonoBehaviour
-{
+public class SpawnGate : NetworkBehaviour {
     [SerializeField] GameObject enemy;
     [SerializeField] AudioClip spawnRobotClip;
     [SerializeField] float enemySpawnInterval = 5f;
@@ -16,12 +16,13 @@ public class SpawnGate : MonoBehaviour
     int currentRobotCount = 0;
     public bool IsActive { get; set; }
 
-    void Start()
-    {
+    public override void Spawned() {
         gameManager = FindFirstObjectByType<GameManager>();
-        GetComponent<EnemyHealth>().Init(gameManager);
-        StartCoroutine(SpawnEnemiesCoroutine());
         isActive = false;
+
+        if(Object != null && Object.HasStateAuthority) {
+            StartCoroutine(SpawnEnemiesCoroutine());
+        }
     }
 
     IEnumerator SpawnEnemiesCoroutine()
@@ -47,8 +48,17 @@ public class SpawnGate : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
+        if(Object == null || !Object.HasStateAuthority) {
+            return;
+        }
+
         if(other.GetComponentInParent<PlayerHealth>() != null) {
             player = other.GetComponentInParent<PlayerHealth>();
+
+            if(isActive) {
+                return;
+            }
+
             isActive = true;
 
             if (currentRobotCount < maxRobotCount) {
@@ -59,6 +69,10 @@ public class SpawnGate : MonoBehaviour
 
     void OnTriggerExit(Collider other)
     {
+        if(Object == null || !Object.HasStateAuthority) {
+            return;
+        }
+
         if(other.GetComponentInParent<PlayerHealth>() != null && canBeReset) {
             isActive = false;
         }
@@ -66,17 +80,56 @@ public class SpawnGate : MonoBehaviour
 
     public void ChildRobotDestroyed()
     {
-        currentRobotCount--;
+        currentRobotCount = Mathf.Max(0, currentRobotCount - 1);
     }
 
     private void SpawnEnemy() {
-        if (enemy == null || player == null || gameManager == null) {
+        if(Object == null || !Object.HasStateAuthority) {
+            return;
+        }
+        if (enemy == null) {
+            return;
+        }
+        if(player == null) {
+            player = GetClosestPlayer();
+        }
+        if(gameManager == null) { 
+            gameManager = FindFirstObjectByType<GameManager>();
+        }
+        if (player == null || gameManager == null) {
+            Debug.LogError("[SpawnGate]: Missing player or gameManager");
             return;
         }
 
         SoundFXManager.instance.PlaySoundFX(spawnRobotClip, transform);
-        GameObject newEnemy = Instantiate(enemy, transform.position, transform.rotation);
-        newEnemy.GetComponent<Robot>().Init(player, gameManager, this);
+        var newEnemy = Runner.Spawn(enemy, transform.position, transform.rotation);
+        if(newEnemy == null) {
+            return;
+        }
+
+        Robot robot = newEnemy.GetComponent<Robot>();
+        if(robot == null) {
+            Debug.LogError("[SpawnGate]: Spawned enemy is missing Robot component");
+            return;
+        }
+
+        robot.Init(player, gameManager, this);
         currentRobotCount++;
+    }
+
+    // helper method get closest player in game
+    private PlayerHealth GetClosestPlayer() {
+        var players = FindObjectsByType<PlayerHealth>(FindObjectsSortMode.None);
+        PlayerHealth closest = null;
+        var minDist = Mathf.Infinity;
+
+        foreach(var player in players) {
+            float dist = Vector3.Distance(transform.position, player.transform.position);
+            if(dist < minDist) { 
+                minDist = dist;
+                closest = player;
+            }
+        }
+        return closest;
     }
 }

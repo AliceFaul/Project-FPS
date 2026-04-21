@@ -390,10 +390,6 @@ PrefabInstance:
     m_TransformParent: {fileID: 308923404}
     m_Modifications:
     - target: {fileID: 1700915145253320045, guid: f757c5ca773f8a3428fea60a6c258dc3, type: 3}
-      propertyPath: exitDoor
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1700915145253320045, guid: f757c5ca773f8a3428fea60a6c258dc3, type: 3}
       propertyPath: youWinText
       value: 
       objectReference: {fileID: 1380539223}
@@ -401,6 +397,18 @@ PrefabInstance:
       propertyPath: enemiesLeftText
       value: 
       objectReference: {fileID: 1380539225}
+    - target: {fileID: 1803024543074282664, guid: f757c5ca773f8a3428fea60a6c258dc3, type: 3}
+      propertyPath: Flags
+      value: 262145
+      objectReference: {fileID: 0}
+    - target: {fileID: 1803024543074282664, guid: f757c5ca773f8a3428fea60a6c258dc3, type: 3}
+      propertyPath: SortKey
+      value: 2572647419
+      objectReference: {fileID: 0}
+    - target: {fileID: 1803024543074282664, guid: f757c5ca773f8a3428fea60a6c258dc3, type: 3}
+      propertyPath: NetworkedBehaviours.Array.size
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5638355847428159759, guid: f757c5ca773f8a3428fea60a6c258dc3, type: 3}
       propertyPath: m_Name
       value: Game Manager

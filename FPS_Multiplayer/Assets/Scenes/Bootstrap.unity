@@ -137,7 +137,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &103639660
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -752,6 +752,7 @@ MonoBehaviour:
     RawGuidValue: b0f4cbf3a37d8984ca8064112643ab86
   spawnPoint: {fileID: 0}
   spawnRadius: 0.3
+  mainCamera: {fileID: 999501842}
 --- !u!1 &1902838281
 GameObject:
   m_ObjectHideFlags: 0

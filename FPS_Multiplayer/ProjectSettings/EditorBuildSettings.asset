@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Bootstrap.unity
     guid: c5e9a86db72fd6e4aabf74845154c544
   - enabled: 1
+    path: Assets/Scenes/LobbyScene.unity
+    guid: 7a02ae0a2e578bc4f8c63e81af87d11e
+  - enabled: 1
     path: Assets/Scenes/TestRoom.unity
     guid: f1387fb1288aded4d9b53810e59a2b33
   - enabled: 1

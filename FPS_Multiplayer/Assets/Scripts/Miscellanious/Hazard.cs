@@ -8,7 +8,8 @@ public class Hazard : MonoBehaviour
     {
         if (other.CompareTag(PLAYER_STRING))
         {
-            other.GetComponent<PlayerHealth>().AdjustHealth(-99);
+            PlayerHealth playerHealth = other.GetComponentInParent<PlayerHealth>();
+            playerHealth?.AdjustHealth(-99);
         }
     }
 }

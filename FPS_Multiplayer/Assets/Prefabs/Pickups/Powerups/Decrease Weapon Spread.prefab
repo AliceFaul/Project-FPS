@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 3504135722591944433}
   - component: {fileID: 3015507221009154463}
   - component: {fileID: 900341921009263036}
+  - component: {fileID: 6046575104159247179}
   m_Layer: 0
   m_Name: Decrease Weapon Spread
   m_TagString: Untagged
@@ -73,6 +74,25 @@ MonoBehaviour:
   notificationText: Weapon spread decreased by 20%
   rotationSpeed: 100
   decreaseAmount: 0.2
+--- !u!114 &6046575104159247179
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 63788008652931769}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SortKey: 2882420263
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 900341921009263036}
+  ForceRemoteRenderTimeframe: 0
 --- !u!1 &594232686759633427
 GameObject:
   m_ObjectHideFlags: 0
@@ -134,8 +154,6 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -158,7 +176,6 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
