@@ -6,10 +6,16 @@ public class WeaponPickup : Pickup
 
     protected override void OnPickup(Collider other)
     {
-        ActiveWeapon activeWeapon = other.GetComponentInChildren<ActiveWeapon>();
-        activeWeapon.SwitchWeapon(weaponSO);
-        activeWeapon.AdjustAmmo(weaponSO.ammoOnPickup);
+        if(weaponSO == null) {
+            return;
+        }
+
+        if(!TryGetPlayerSetup(other, out PlayerNetworkSetup playerSetup)) {
+            return;
+        }
+
+        playerSetup.GrantWeaponPickup(weaponSO.ID, weaponSO.ammoOnPickup);
         SoundFXManager.instance.PlaySoundFX(pickupClip, other.transform);
-        Runner.Despawn(Object);
+        ConsumePickup();
     }
 }

@@ -21,6 +21,8 @@ public class Turret : NetworkBehaviour {
 
     bool isShotReady = false;
 
+    [Networked] private Quaternion NetworkTurretHeadRotation { get; set; }
+
     public override void Spawned() {
         gameManager = FindFirstObjectByType<GameManager>();
         if(gameManager != null) {
@@ -37,10 +39,15 @@ public class Turret : NetworkBehaviour {
     void Update()
     {
         EnsurePlayerTarget();
-        if(playerTargetPoint) {
+
+        if(Object != null && Object.HasStateAuthority && playerTargetPoint) {
             targeting.LookAt(playerTargetPoint.position);
             euler = targeting.eulerAngles;
-            turretHead.eulerAngles = new Vector3(euler.x, euler.y, turretHead.eulerAngles.z);
+            NetworkTurretHeadRotation = Quaternion.Euler(euler.x, euler.y, turretHead.eulerAngles.z);
+        }
+
+        if(turretHead != null) {
+            turretHead.rotation = NetworkTurretHeadRotation;
         }
     }
 

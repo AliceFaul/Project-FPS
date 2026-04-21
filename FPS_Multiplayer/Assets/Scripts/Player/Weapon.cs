@@ -11,11 +11,9 @@ public class Weapon : MonoBehaviour
     [SerializeField] GameObject spawnedProjectile;
     [SerializeField] Transform projectileSpawnReference;
 
-    static float spreadControl = 1f;
-
     public ParticleSystem MuzzleFlash => muzzleFlash;
 
-    public void Shoot(WeaponSO weaponSO, PlayerNetworkSetup shootingSync = null)
+    public void Shoot(WeaponSO weaponSO, PlayerNetworkSetup shootingSync = null, float spreadControl = 1f)
     {
         muzzleFlash.Play();
         SoundFXManager.instance.PlaySoundFX(gunshotClip, transform);
@@ -56,11 +54,6 @@ public class Weapon : MonoBehaviour
 
         GameObject projectile = Instantiate(spawnedProjectile, projectileSpawnReference.position, projectileSpawnReference.rotation);
         projectile.transform.LookAt(projectileTargetPoint);
-    }
-
-    public void DecreaseWeaponSpread(float decreasePercent)
-    {
-        spreadControl -= decreasePercent;
     }
 
     private bool TryGetFirstValidHit(Vector3 origin, Vector3 direction, out RaycastHit validHit)

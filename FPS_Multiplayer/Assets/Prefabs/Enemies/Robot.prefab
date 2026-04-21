@@ -49,6 +49,7 @@ GameObject:
   - component: {fileID: 3027414694303117554}
   - component: {fileID: -4132893185074510088}
   - component: {fileID: 9081918321166455962}
+  - component: {fileID: 1701260469380761320}
   m_Layer: 6
   m_Name: Robot
   m_TagString: Enemy
@@ -316,7 +317,25 @@ MonoBehaviour:
   NetworkedBehaviours:
   - {fileID: 1373617088005547022}
   - {fileID: 3966111567705451692}
+  - {fileID: 1701260469380761320}
   ForceRemoteRenderTimeframe: 0
+--- !u!114 &1701260469380761320
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6849893368691078167}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  SyncScale: 0
+  SyncParent: 0
+  _autoAOIOverride: 1
+  DisableSharedModeInterpolation: 0
 --- !u!1001 &4413648178453140950
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -7,9 +7,13 @@ public class DecreaseWeaponSpread : Pickup
  
     protected override void OnPickup(Collider other)
     {
-        other.GetComponentInChildren<Weapon>().DecreaseWeaponSpread(decreaseAmount);
+        if(!TryGetPlayerSetup(other, out PlayerNetworkSetup playerSetup)) {
+            return;
+        }
+
+        playerSetup.GrantDecreaseSpread(decreaseAmount);
         Notification();
         SoundFXManager.instance.PlaySoundFX(pickupClip, other.transform);
-        
+        ConsumePickup();
     }
 }

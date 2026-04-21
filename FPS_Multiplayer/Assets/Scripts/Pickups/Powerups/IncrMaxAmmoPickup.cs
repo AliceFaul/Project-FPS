@@ -4,9 +4,13 @@ public class IncrMaxAmmoPickup : Pickup
 {
     protected override void OnPickup(Collider other)
     {
-        other.GetComponentInChildren<ActiveWeapon>().IncreaseMaxAmmo();
+        if(!TryGetPlayerSetup(other, out PlayerNetworkSetup playerSetup)) {
+            return;
+        }
+
+        playerSetup.GrantIncreaseMaxAmmo();
         Notification();
         SoundFXManager.instance.PlaySoundFX(pickupClip, other.transform);
-        Destroy(gameObject);
+        ConsumePickup();
     }
 }
