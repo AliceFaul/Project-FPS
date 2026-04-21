@@ -10,6 +10,6 @@ public class WeaponPickup : Pickup
         activeWeapon.SwitchWeapon(weaponSO);
         activeWeapon.AdjustAmmo(weaponSO.ammoOnPickup);
         SoundFXManager.instance.PlaySoundFX(pickupClip, other.transform);
-        Destroy(gameObject);
+        Runner.Despawn(Object);
     }
 }

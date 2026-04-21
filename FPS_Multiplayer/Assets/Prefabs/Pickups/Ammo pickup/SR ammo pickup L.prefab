@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 3745491065726626158}
   - component: {fileID: 6301233184320285974}
   - component: {fileID: 8650928947781469181}
+  - component: {fileID: -3247318195448412854}
   m_Layer: 0
   m_Name: SR ammo pickup L
   m_TagString: Untagged
@@ -46,13 +47,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6c3896396e09e346901c9ca7224e669, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickupSFX: {fileID: 0}
   pickupClip: {fileID: 8300000, guid: 1a9592fcc44b3db4f90842db53774e99, type: 3}
-  model: {fileID: 6471612811014977378}
-  UINotification: {fileID: 0}
   notificationText: Notification
   rotationSpeed: 100
-  notifDuration: 3
   weapons4AmmoGain:
   - {fileID: 11400000, guid: 6bdb2b60873fbce4d87c976c24b2aadb, type: 2}
   ammoPortion: 0.7
@@ -79,6 +76,25 @@ CapsuleCollider:
   m_Height: 1
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &-3247318195448412854
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 616887689213286076}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SortKey: 3078794135
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 6301233184320285974}
+  ForceRemoteRenderTimeframe: 0
 --- !u!1 &6471612811014977378
 GameObject:
   m_ObjectHideFlags: 0

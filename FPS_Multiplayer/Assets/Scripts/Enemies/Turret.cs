@@ -74,11 +74,16 @@ public class Turret : NetworkBehaviour {
 
     // function to shoot in network
     private void Shoot() {
-        var obj = Runner.Spawn(projectilePrefab, projectileSpawnPoint.position, Quaternion.identity);
+        Vector3 targetPosition = playerTargetPoint != null ? playerTargetPoint.position : projectileSpawnPoint.position + turretHead.forward;
+        Vector3 shootDirection = (targetPosition - projectileSpawnPoint.position).normalized;
+        Quaternion projectileRotation = shootDirection.sqrMagnitude > 0f
+            ? Quaternion.LookRotation(shootDirection)
+            : projectileSpawnPoint.rotation;
+
+        var obj = Runner.Spawn(projectilePrefab, projectileSpawnPoint.position, projectileRotation);
         if(obj == null) {
             return;
         }
-        obj.transform.LookAt(playerTargetPoint.position);
         obj.GetComponent<Projectile>().Init(damage);
         SoundFXManager.instance.PlaySoundFX(shootClip, transform);
     }
@@ -101,24 +106,15 @@ public class Turret : NetworkBehaviour {
 
     // helper method help get closest player
     private PlayerHealth GetClosestPlayer() {
-        if(Runner == null) {
-            Debug.LogError("[Turret]: Runner is NULL");
-            return null;
-        }
+        var players = FindObjectsByType<PlayerHealth>(FindObjectsSortMode.None);
         PlayerHealth closest = null;
-        float minDist = Mathf.Infinity;
+        float minDist = float.MaxValue;
 
-        foreach(var player in Runner.ActivePlayers) { 
-            var obj = Runner.GetPlayerObject(player);
-            if(obj == null) continue;
-
-            var playerHealth = obj.GetComponent<PlayerHealth>();
-            if (playerHealth != null) continue;
-
-            float dist = Vector3.Distance(transform.position, playerHealth.transform.position);
+        foreach(var player in players) { 
+            float dist = Vector3.Distance(transform.position, player.transform.position);
             if(dist < minDist) { 
                 minDist = dist;
-                closest = playerHealth;
+                closest = player;
             }
         }
         return closest;

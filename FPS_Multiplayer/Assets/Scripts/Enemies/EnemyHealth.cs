@@ -80,13 +80,31 @@ public class EnemyHealth : NetworkBehaviour {
         if(Random.value < chance4drop) {
             dropSpawnPos = transform.position - new Vector3(0, .5f, 0);
             if(Random.value > chance4ammoDrop && Runner != null) {
-                Runner.Spawn(healthDrop, dropSpawnPos, Quaternion.identity);
+                TrySpawnDrop(healthDrop, dropSpawnPos);
             } else {
                 int lootNr = Random.Range(0, ammoDrop.Length);
-                Runner.Spawn(ammoDrop[lootNr], dropSpawnPos, Quaternion.identity);
+                TrySpawnDrop(ammoDrop[lootNr], dropSpawnPos);
             }
         }
         parentGate?.ChildRobotDestroyed();
         Runner.Despawn(Object);
+    }
+
+    private void TrySpawnDrop(GameObject dropPrefab, Vector3 position) {
+        if(dropPrefab == null) {
+            Debug.LogWarning("[EnemyHealth]: Drop prefab is null.");
+            return;
+        }
+
+        if(Runner == null) {
+            return;
+        }
+
+        if(dropPrefab.GetComponent<NetworkObject>() == null) {
+            Debug.LogError($"[EnemyHealth]: Drop prefab '{dropPrefab.name}' is missing NetworkObject, cannot spawn with Runner.Spawn.");
+            return;
+        }
+
+        Runner.Spawn(dropPrefab, position, Quaternion.identity);
     }
 }

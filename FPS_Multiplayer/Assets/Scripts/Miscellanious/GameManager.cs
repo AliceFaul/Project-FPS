@@ -28,11 +28,14 @@ public class GameManager : NetworkBehaviour
 
     public void AdjustEnemiesLeft(int amount)
     {
-        if(!Object.HasStateAuthority) {
+        if(Object == null || !Object.HasStateAuthority) {
             return;
         }
-        enemiesLeft = Mathf.Clamp(enemiesLeft, 0, enemiesLeft += amount);
-        if (enemiesLeft <= 0)
+
+        int previousEnemiesLeft = enemiesLeft;
+        enemiesLeft = Mathf.Max(0, enemiesLeft + amount);
+
+        if (previousEnemiesLeft > 0 && enemiesLeft <= 0)
         {
             RPC_ShowWinText();
             exitDoor.UnlockDoor();

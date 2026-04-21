@@ -16,12 +16,13 @@ public class SpawnGate : NetworkBehaviour {
     int currentRobotCount = 0;
     public bool IsActive { get; set; }
 
-    void Start()
-    {
+    public override void Spawned() {
         gameManager = FindFirstObjectByType<GameManager>();
-        //GetComponent<EnemyHealth>().Init(gameManager);
-        StartCoroutine(SpawnEnemiesCoroutine());
         isActive = false;
+
+        if(Object != null && Object.HasStateAuthority) {
+            StartCoroutine(SpawnEnemiesCoroutine());
+        }
     }
 
     IEnumerator SpawnEnemiesCoroutine()
@@ -47,8 +48,17 @@ public class SpawnGate : NetworkBehaviour {
 
     void OnTriggerEnter(Collider other)
     {
+        if(Object == null || !Object.HasStateAuthority) {
+            return;
+        }
+
         if(other.GetComponentInParent<PlayerHealth>() != null) {
             player = other.GetComponentInParent<PlayerHealth>();
+
+            if(isActive) {
+                return;
+            }
+
             isActive = true;
 
             if (currentRobotCount < maxRobotCount) {
@@ -59,6 +69,10 @@ public class SpawnGate : NetworkBehaviour {
 
     void OnTriggerExit(Collider other)
     {
+        if(Object == null || !Object.HasStateAuthority) {
+            return;
+        }
+
         if(other.GetComponentInParent<PlayerHealth>() != null && canBeReset) {
             isActive = false;
         }
@@ -66,11 +80,11 @@ public class SpawnGate : NetworkBehaviour {
 
     public void ChildRobotDestroyed()
     {
-        currentRobotCount--;
+        currentRobotCount = Mathf.Max(0, currentRobotCount - 1);
     }
 
     private void SpawnEnemy() {
-        if(!Object.HasStateAuthority) {
+        if(Object == null || !Object.HasStateAuthority) {
             return;
         }
         if (enemy == null) {
@@ -89,26 +103,31 @@ public class SpawnGate : NetworkBehaviour {
 
         SoundFXManager.instance.PlaySoundFX(spawnRobotClip, transform);
         var newEnemy = Runner.Spawn(enemy, transform.position, transform.rotation);
-        newEnemy.GetComponent<Robot>().Init(player, gameManager, this);
+        if(newEnemy == null) {
+            return;
+        }
+
+        Robot robot = newEnemy.GetComponent<Robot>();
+        if(robot == null) {
+            Debug.LogError("[SpawnGate]: Spawned enemy is missing Robot component");
+            return;
+        }
+
+        robot.Init(player, gameManager, this);
         currentRobotCount++;
     }
 
-    private PlayerHealth GetClosestPlayer() { 
-        if(Runner == null) { 
-            return null;
-        }
+    // helper method get closest player in game
+    private PlayerHealth GetClosestPlayer() {
+        var players = FindObjectsByType<PlayerHealth>(FindObjectsSortMode.None);
         PlayerHealth closest = null;
-        float minDist = Mathf.Infinity;
+        var minDist = Mathf.Infinity;
 
-        foreach(var player in Runner.ActivePlayers) {
-            var obj = Runner.GetPlayerObject(player);
-            if(obj == null) continue;
-            var health = obj.GetComponent<PlayerHealth>();
-            if(health == null) continue;
-            float dist = Vector3.Distance(transform.position, health.transform.position);
+        foreach(var player in players) {
+            float dist = Vector3.Distance(transform.position, player.transform.position);
             if(dist < minDist) { 
                 minDist = dist;
-                closest = health;
+                closest = player;
             }
         }
         return closest;

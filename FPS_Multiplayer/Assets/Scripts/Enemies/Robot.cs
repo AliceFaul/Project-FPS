@@ -87,23 +87,15 @@ public class Robot : NetworkBehaviour {
 
     // function help enemy find a closest player
     private PlayerHealth GetClosestPlayer() {
-        if(Runner == null) { 
-            return null;
-        }
+        var players = FindObjectsByType<PlayerHealth>(FindObjectsSortMode.None);
         PlayerHealth closest = null;
-        float minDist = Mathf.Infinity;
+        var minDist = Mathf.Infinity;   
 
-        foreach(var player in Runner.ActivePlayers) {
-            var obj = Runner.GetPlayerObject(player);
-            if(obj == null) continue;
-            
-            var health = obj.GetComponent<PlayerHealth>();
-            if(health == null) continue;
-            
-            float dist = Vector3.Distance(transform.position, health.transform.position);
+        foreach(var player in players) {
+            float dist = Vector3.Distance(transform.position, player.transform.position);
             if(dist < minDist) {
                 minDist = dist;
-                closest = health;
+                closest = player;
             }
         }
         return closest;
