@@ -354,6 +354,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 366950624716913172, guid: f5d2c81728fef0c4dacaed70e70bf652, type: 3}
+      propertyPath: Flags
+      value: 262145
+      objectReference: {fileID: 0}
+    - target: {fileID: 366950624716913172, guid: f5d2c81728fef0c4dacaed70e70bf652, type: 3}
+      propertyPath: SortKey
+      value: 2358924119
+      objectReference: {fileID: 0}
+    - target: {fileID: 366950624716913172, guid: f5d2c81728fef0c4dacaed70e70bf652, type: 3}
+      propertyPath: NetworkedBehaviours.Array.size
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 980744866232550078, guid: f5d2c81728fef0c4dacaed70e70bf652, type: 3}
       propertyPath: m_Name
       value: Manager
@@ -398,22 +410,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5213410134516810608, guid: f5d2c81728fef0c4dacaed70e70bf652, type: 3}
-      propertyPath: SortKey
-      value: 732752679
-      objectReference: {fileID: 0}
-    - target: {fileID: 8219283450120033886, guid: f5d2c81728fef0c4dacaed70e70bf652, type: 3}
-      propertyPath: chatInput
-      value: 
-      objectReference: {fileID: 1022456609}
-    - target: {fileID: 8219283450120033886, guid: f5d2c81728fef0c4dacaed70e70bf652, type: 3}
-      propertyPath: chatPanel
-      value: 
-      objectReference: {fileID: 1022456608}
-    - target: {fileID: 8219283450120033886, guid: f5d2c81728fef0c4dacaed70e70bf652, type: 3}
-      propertyPath: chatContentParent
-      value: 
-      objectReference: {fileID: 1022456607}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1109,27 +1105,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8113002115157454744, guid: d49887f9ec99c0642a47dd728f98701b, type: 3}
   m_PrefabInstance: {fileID: 1022456605}
   m_PrefabAsset: {fileID: 0}
---- !u!224 &1022456607 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 4742225642139438944, guid: d49887f9ec99c0642a47dd728f98701b, type: 3}
-  m_PrefabInstance: {fileID: 1022456605}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1022456608 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 975519050843981872, guid: d49887f9ec99c0642a47dd728f98701b, type: 3}
-  m_PrefabInstance: {fileID: 1022456605}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1022456609 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 908886131379925104, guid: d49887f9ec99c0642a47dd728f98701b, type: 3}
-  m_PrefabInstance: {fileID: 1022456605}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2da0c512f12947e489f739169773d7ca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1048862372
 GameObject:
   m_ObjectHideFlags: 0

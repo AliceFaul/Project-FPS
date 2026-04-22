@@ -9,8 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2481050290478362181}
-  - component: {fileID: 8219283450120033886}
-  - component: {fileID: 5213410134516810608}
+  - component: {fileID: 4911203144408758796}
+  - component: {fileID: 366950624716913172}
   m_Layer: 0
   m_Name: Manager
   m_TagString: Untagged
@@ -26,14 +26,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 980744866232550078}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.65921754, y: 2.3670716, z: 0.113181114}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8219283450120033886
+--- !u!114 &4911203144408758796
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -45,11 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8685dc8062d6b14391bc86eb5a824e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  chatInput: {fileID: 0}
-  chatPanel: {fileID: 0}
-  chatContentParent: {fileID: 0}
-  chatItemPrefab: {fileID: 1316154837558845552, guid: ded39bb99095ef6448f724299bc7f509, type: 3}
---- !u!114 &5213410134516810608
+--- !u!114 &366950624716913172
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -61,10 +57,10 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SortKey: 1861178589
+  SortKey: 3487350029
   ObjectInterest: 1
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
-  - {fileID: 8219283450120033886}
+  - {fileID: 4911203144408758796}
   ForceRemoteRenderTimeframe: 0

@@ -30,18 +30,18 @@ public class PlayerInfo : NetworkBehaviour {
             resolvedName = PlayerNameStorage.DefaultPlayerName;
         }
         if(_lastRenderedName == resolvedName) {
-            Color targetColor = GetPlayerNameColor(Object.InputAuthority);
+            Color targetColor = ResolvePlayerNameColor(Object.InputAuthority);
             if(_lastRenderedColor == targetColor) {
                 return;
             }
         }
         _lastRenderedName = resolvedName;
-        _lastRenderedColor = GetPlayerNameColor(Object.InputAuthority);
+        _lastRenderedColor = ResolvePlayerNameColor(Object.InputAuthority);
         playerNameText.text = resolvedName;
         playerNameText.color = _lastRenderedColor;
     }
 
-    private static Color GetPlayerNameColor(PlayerRef playerRef) {
+    public static Color ResolvePlayerNameColor(PlayerRef playerRef) {
         int seed = Mathf.Abs(playerRef.RawEncoded);
         float hue = (seed * 0.61803398875f) % 1f;
         float saturation = 0.65f + ((seed % 3) * 0.1f);
