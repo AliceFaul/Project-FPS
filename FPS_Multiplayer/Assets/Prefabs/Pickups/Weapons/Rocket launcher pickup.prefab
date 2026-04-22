@@ -142,6 +142,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2048868234249069642, guid: 420e9e69a82573a40adafc5d57e9fcd9, type: 3}
+      propertyPath: SortKey
+      value: 2932917921
+      objectReference: {fileID: 0}
     - target: {fileID: 3609462322932117851, guid: 420e9e69a82573a40adafc5d57e9fcd9, type: 3}
       propertyPath: m_Name
       value: Rocket launcher pickup

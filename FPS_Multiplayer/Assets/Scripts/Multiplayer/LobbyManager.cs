@@ -26,13 +26,13 @@ public class LobbyManager : MonoBehaviour
 
         // Giữ nguyên logic ban đầu của ông
         lobbyPanel.SetActive(false);
-        characterSelectionPanel.SetActive(true);
+        // characterSelectionPanel.SetActive(true);
 
-        if (spawner == null) spawner = FindFirstObjectByType<NetworkRunnerManager>();
+        ResolveSpawner();
         if(playerNameInput != null) {
             playerNameInput.text = PlayerNameStorage.GetPlayerName();
         }
-        await spawner.StartLobby();
+        // await spawner.StartLobby();
     }
 
     public void OnNextButton() // Đây chính là hàm chạy khi bấm Confirm
@@ -91,13 +91,40 @@ public class LobbyManager : MonoBehaviour
 
     async void OnJoinRoom(string sessionName)
     {
+        if(!ResolveSpawner()) {
+            Debug.LogError("NetworkRunnerManager not found when trying to join room.");
+            return;
+        }
+
         await spawner.JoinGame(sessionName);
     }
 
     public async void OnCreateRoomButton()
     {
+        if(!ResolveSpawner()) {
+            Debug.LogError("NetworkRunnerManager not found when trying to create room.");
+            return;
+        }
+
+        if(roomNameInput == null) {
+            Debug.LogError("Room name input is not assigned.");
+            return;
+        }
+
         var roomName = roomNameInput.text;
         if (string.IsNullOrEmpty(roomName)) return;
         await spawner.StartHost(roomName, 5, SceneRef.FromIndex(2));
+    }
+
+    private bool ResolveSpawner() {
+        if(spawner == null) {
+            spawner = NetworkRunnerManager.Instance;
+        }
+
+        if(spawner == null) {
+            spawner = FindFirstObjectByType<NetworkRunnerManager>();
+        }
+
+        return spawner != null;
     }
 }

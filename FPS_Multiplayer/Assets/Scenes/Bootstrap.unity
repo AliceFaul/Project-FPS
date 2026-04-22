@@ -585,6 +585,7 @@ MonoBehaviour:
   spawnPoint: {fileID: 0}
   spawnRadius: 0.3
   mainCamera: {fileID: 999501842}
+  loadingCanvas: {fileID: 103639662}
   lobbyManager: {fileID: 0}
 --- !u!1 &1474653247
 GameObject:

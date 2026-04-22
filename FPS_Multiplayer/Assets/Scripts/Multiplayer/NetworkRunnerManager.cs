@@ -11,6 +11,9 @@ using UnityEngine.InputSystem;
 #endif
 
 public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
+    public const string MainMenuSceneName = "Main menu";
+    public static NetworkRunnerManager Instance { get; private set; }
+
     private NetworkRunner _runner;
 
     // Dictionary to keep track of spawned characters for each player
@@ -27,10 +30,13 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
     [SerializeField] private LobbyManager lobbyManager;
 
     private void Awake() {
-        if(_runner == null) {
-            _runner = gameObject.AddComponent<NetworkRunner>();
+        if(Instance != null && Instance != this) {
+            Destroy(gameObject);
+            return;
         }
-        DontDestroyOnLoad(this);
+        Instance = this;
+        EnsureRunner();
+        DontDestroyOnLoad(gameObject);
     }
 
     private async void Start() {
@@ -47,9 +53,7 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
 
     // function let player join lobby in start of game
     public async Task StartLobby() {
-        if(_runner == null) {
-            _runner = gameObject.AddComponent<NetworkRunner>();
-        }
+        EnsureRunner();
         _runner.ProvideInput = true;
         _runner.AddCallbacks(this);
         var result = await _runner.JoinSessionLobby(SessionLobby.ClientServer, "default-lobby");
@@ -69,9 +73,7 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
     }
 
     private async void StartGame(GameMode mode) {
-        if(_runner == null) {
-            return;
-        }
+        EnsureRunner();
         var scene = SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex + 1);
         var sceneInfo = new NetworkSceneInfo();
         if (scene.IsValid) {
@@ -93,9 +95,7 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
 
     // function let host create room and started as host
     public async Task StartHost(string sessionName, int playerCount, SceneRef sceneRef) {
-        if(_runner == null) {
-            return;
-        }
+        EnsureRunner();
         var result = await _runner.StartGame(new StartGameArgs {
             GameMode = GameMode.Host,
             SessionName = sessionName,
@@ -113,9 +113,7 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
 
     // function let player join room in room list as client mode
     public async Task JoinGame(string sessionName) {
-        if(_runner == null) {
-            return;
-        }
+        EnsureRunner();
         var result = await _runner.StartGame(new StartGameArgs {
             GameMode = GameMode.Client,
             SessionName = sessionName,
@@ -139,6 +137,27 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
         }
 
         SceneManager.LoadScene(currentScene);
+    }
+
+    public async void LeaveRoomAndReturnToMainMenu() {
+        if(_runner != null && _runner.IsRunning) {
+            await _runner.Shutdown();
+        }
+
+        _spawnedCharacters.Clear();
+        _spawnPositions.Clear();
+        _spawnRotations.Clear();
+        _inputs = null;
+
+        if(mainCamera != null) {
+            mainCamera.SetActive(true);
+        }
+
+        if(loadingCanvas != null) {
+            loadingCanvas.gameObject.SetActive(false);
+        }
+
+        SceneManager.LoadScene(MainMenuSceneName, LoadSceneMode.Single);
     }
     
     // function spawn character for player when player joined room 
@@ -232,7 +251,11 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
         input.Set(inputData);
     }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
-    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
+    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) {
+        if(runner == _runner) {
+            _runner = null;
+        }
+    }
     public void OnConnectedToServer(NetworkRunner runner) { }
     public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
     public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
@@ -255,6 +278,16 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
     public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
+
+    private void EnsureRunner() {
+        if(_runner == null) {
+            _runner = GetComponent<NetworkRunner>();
+        }
+
+        if(_runner == null) {
+            _runner = gameObject.AddComponent<NetworkRunner>();
+        }
+    }
 
     private static StarterAssetsInputs FindLocalStarterAssetsInputs() {
         StarterAssetsInputs[] inputs = FindObjectsByType<StarterAssetsInputs>(FindObjectsSortMode.None);
