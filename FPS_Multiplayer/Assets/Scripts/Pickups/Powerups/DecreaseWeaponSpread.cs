@@ -1,4 +1,5 @@
 using UnityEngine;
+using Fusion;
 
 public class DecreaseWeaponSpread : Pickup
 {
@@ -9,6 +10,6 @@ public class DecreaseWeaponSpread : Pickup
         other.GetComponentInChildren<Weapon>().DecreaseWeaponSpread(decreaseAmount);
         Notification();
         SoundFXManager.instance.PlaySoundFX(pickupClip, other.transform);
-        Destroy(gameObject);
+        
     }
 }

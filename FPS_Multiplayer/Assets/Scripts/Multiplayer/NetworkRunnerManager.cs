@@ -185,6 +185,13 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
             spawnRotation = Quaternion.identity;
         }
 
+        NetworkCharacterController networkCharacterController = playerHealth.GetComponent<NetworkCharacterController>();
+        if(networkCharacterController != null) {
+            networkCharacterController.Velocity = Vector3.zero;
+            networkCharacterController.Teleport(spawnPosition, spawnRotation);
+            return;
+        }
+
         Transform playerTransform = playerHealth.transform;
         CharacterController characterController = playerHealth.GetComponent<CharacterController>();
         if(characterController != null) {

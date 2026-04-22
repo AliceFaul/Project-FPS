@@ -1,8 +1,8 @@
 using System.Collections;
+using Fusion;
 using UnityEngine;
 
-public class MovingPlatform : MonoBehaviour
-{
+public class MovingPlatform : NetworkBehaviour {
     [SerializeField] Vector3 pointA;
     [SerializeField] Vector3 pointB;
     [SerializeField] float speed = 10f;
@@ -10,26 +10,27 @@ public class MovingPlatform : MonoBehaviour
 
     Vector3 goal;
 
-    void Start()
-    {
+    void Start() {
         goal = pointA;
     }
 
-    void FixedUpdate()
-    {
-        transform.position = Vector3.MoveTowards(transform.position, goal, Time.deltaTime * speed);
-        if (transform.position == pointA)
-        {
-            StartCoroutine(SwitchTargetRoutine(pointB));
+    public override void FixedUpdateNetwork() {
+        if(!Object.HasStateAuthority) {
+            return;
         }
-        else if(transform.position == pointB)
-        {
+        MovePlatform();
+    }
+
+    private void MovePlatform() {
+        transform.position = Vector3.MoveTowards(transform.position, goal, Runner.DeltaTime * speed);
+        if (transform.position == pointA) {
+            StartCoroutine(SwitchTargetRoutine(pointB));
+        } else if (transform.position == pointB) {
             StartCoroutine(SwitchTargetRoutine(pointA));
         }
     }
 
-    IEnumerator SwitchTargetRoutine(Vector3 target)
-    {
+    IEnumerator SwitchTargetRoutine(Vector3 target) {
         yield return new WaitForSeconds(delay);
         goal = target;
     }

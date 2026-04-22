@@ -27,7 +27,8 @@ public class Explosion : MonoBehaviour
         {
             if (hitCollider.CompareTag(PLAYER_STRING))
             {
-                hitCollider.GetComponent<PlayerHealth>().AdjustHealth(-exlosionDamage);
+                PlayerHealth playerHealth = hitCollider.GetComponentInParent<PlayerHealth>();
+                playerHealth?.AdjustHealth(-exlosionDamage);
                 break;
             }
         }

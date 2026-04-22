@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 140222791101039180}
   - component: {fileID: -6854088179955142604}
   - component: {fileID: -6915483179746739130}
+  - component: {fileID: 7968950384284009464}
   m_Layer: 6
   m_Name: Machine gun
   m_TagString: Untagged
@@ -238,6 +239,24 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &7968950384284009464
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5165689182009086196}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SortKey: 2946539203
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours: []
+  ForceRemoteRenderTimeframe: 0
 --- !u!1 &6342466996646121775
 GameObject:
   m_ObjectHideFlags: 0

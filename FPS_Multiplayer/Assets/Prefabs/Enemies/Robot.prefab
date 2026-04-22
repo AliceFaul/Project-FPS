@@ -48,6 +48,7 @@ GameObject:
   - component: {fileID: 1093976614932191824}
   - component: {fileID: 3027414694303117554}
   - component: {fileID: -4132893185074510088}
+  - component: {fileID: 9081918321166455962}
   m_Layer: 6
   m_Name: Robot
   m_TagString: Enemy
@@ -137,6 +138,7 @@ MonoBehaviour:
   startHealth: 3
   chance4drop: 0.4
   chance4ammoDrop: 0.6
+  _NetworkHealth: 0
 --- !u!114 &3966111567705451692
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -295,6 +297,26 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &9081918321166455962
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6849893368691078167}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SortKey: 2146490676
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 1373617088005547022}
+  - {fileID: 3966111567705451692}
+  ForceRemoteRenderTimeframe: 0
 --- !u!1001 &4413648178453140950
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 3135623977662309716}
   - component: {fileID: 3932523327278385741}
   - component: {fileID: 785001780699749373}
+  - component: {fileID: 8028732335339148246}
   m_Layer: 0
   m_Name: Active weapon
   m_TagString: Untagged
@@ -88,6 +89,24 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &8028732335339148246
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 594313886209904868}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SortKey: 3614391301
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours: []
+  ForceRemoteRenderTimeframe: 0
 --- !u!1 &1037704445733155402
 GameObject:
   m_ObjectHideFlags: 0
@@ -106,6 +125,7 @@ GameObject:
   - component: {fileID: 7829634896877739932}
   - component: {fileID: 8130565372713198069}
   - component: {fileID: 1618176570684372503}
+  - component: {fileID: 5473861136966131238}
   - component: {fileID: 1789448726504012015}
   - component: {fileID: 7330214119962692694}
   - component: {fileID: 5272445575765710514}
@@ -361,6 +381,11 @@ MonoBehaviour:
   gameOverContainer: {fileID: 0}
   globalVolume: {fileID: 0}
   respawnDelay: 2
+  damageFlashRenderers: []
+  debugHealthStep: 1
+  damageFlashColor: {r: 1, g: 0.25, b: 0.25, a: 1}
+  damageFlashStrength: 0.85
+  damageFlashDuration: 0.12
 --- !u!114 &7829634896877739932
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -409,12 +434,28 @@ MonoBehaviour:
   SortKey: 1356000992
   ObjectInterest: 1
   Flags: 262145
-  NestedObjects: []
+  NestedObjects:
+  - {fileID: 8028732335339148246}
   NetworkedBehaviours:
+  - {fileID: 8040993034636308884}
+  - {fileID: 5473861136966131238}
   - {fileID: 1789448726504012015}
   - {fileID: 7330214119962692694}
   - {fileID: 5272445575765710514}
   ForceRemoteRenderTimeframe: 0
+--- !u!114 &5473861136966131238
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1037704445733155402}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca72e2da48ad2c740887649611e04bb5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerNameText: {fileID: 94289265767022007}
 --- !u!114 &1789448726504012015
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -437,11 +478,24 @@ MonoBehaviour:
   playerInput: {fileID: 0}
   localOnlyObjects:
   - {fileID: 2683760635097298139}
+  remoteOnlyObjects:
   - {fileID: 8068817330457886729}
-  remoteOnlyObjects: []
   localOnlyBehaviours:
   - {fileID: 3932523327278385741}
   - {fileID: 8195923042279275202}
+  enableRemoteShotFx: 1
+  remoteShotDistance: 100
+  remoteTracerDuration: 0.06
+  remoteTracerWidth: 0.035
+  remoteTracerColor: {r: 0.5657586, g: 0.9924528, b: 0.2902455, a: 0.9}
+  remoteMuzzleFlashPrefab: {fileID: 0}
+  remoteMuzzleFlashLifetime: 0.18
+  remoteMuzzleFlashForwardOffset: 0.12
+  remoteImpactVfxPrefab: {fileID: 4119116250391436092, guid: 9c821fce74a238e44b880189d86a1928, type: 3}
+  remoteImpactVfxLifetime: 1.2
+  remoteImpactOffset: 0.03
+  _Players:
+    _items: []
 --- !u!114 &7330214119962692694
 MonoBehaviour:
   m_ObjectHideFlags: 0
