@@ -31,14 +31,15 @@ public class ActiveWeapon : MonoBehaviour
 
     public WeaponSO[] WeaponList => weaponList; 
 
-    static int[] checkpointAmmoList = null;
-    static int[] maxAmmoList = { 20, 56, 12, 8 };
-    static bool[] weaponsPickedUp = {false, false, false, false};
-    static bool[] CheckpointWeaponsPickedUp = null;
+    int[] checkpointAmmoList = null;
+    int[] maxAmmoList = { 20, 56, 12, 8 };
+    bool[] weaponsPickedUp = {false, false, false, false};
+    bool[] checkpointWeaponsPickedUp = null;
 
     float defaultFOV;
     float defaultZoomRotationSpeed;
     float coolDown = 0f;
+    float spreadControl = 1f;
     int currentAmmo = 0;
     int currentWeaponID = 0;
 
@@ -90,7 +91,7 @@ public class ActiveWeapon : MonoBehaviour
         }
 
         if(checkpointAmmoList != null) currentAmmoList = checkpointAmmoList;
-        if(CheckpointWeaponsPickedUp != null) weaponsPickedUp = CheckpointWeaponsPickedUp;
+        if(checkpointWeaponsPickedUp != null) weaponsPickedUp = checkpointWeaponsPickedUp;
 
         SwitchWeapon(startingWeaponSO);
         isInitialized = true;
@@ -135,7 +136,7 @@ public class ActiveWeapon : MonoBehaviour
         if (coolDown >= currentWeaponSO.FireRate && currentAmmo > 0)
         {
             coolDown = 0f;
-            currentWeapon.Shoot(currentWeaponSO, playerNetworkSetup);
+            currentWeapon.Shoot(currentWeaponSO, playerNetworkSetup, spreadControl);
             animator.Play(currentWeaponSO.shootString, 0, 0f);
             AdjustAmmo(-1);
         }
@@ -226,6 +227,7 @@ public class ActiveWeapon : MonoBehaviour
         {
             weaponsPickedUp[i] = weaponList[i].PickedUp;
         }
+        checkpointWeaponsPickedUp = (bool[])weaponsPickedUp.Clone();
     }
 
     public void IncreaseMaxAmmo()
@@ -234,5 +236,38 @@ public class ActiveWeapon : MonoBehaviour
         {
             maxAmmoList[i] = (int)Mathf.Ceil(weaponList[i].MagazineSize * 1.25f);
         }
+    }
+
+    public void DecreaseSpread(float decreaseAmount) {
+        spreadControl = Mathf.Clamp(spreadControl - decreaseAmount, 0.1f, 1f);
+    }
+
+    public void GrantAmmoForWeapon(int weaponId, float ammoPortion) {
+        if(!TryGetWeaponById(weaponId, out WeaponSO weaponSO)) {
+            return;
+        }
+
+        AdjustAmmo(weaponSO, ammoPortion);
+    }
+
+    public void GrantWeaponPickup(int weaponId, int ammoAmount) {
+        if(!TryGetWeaponById(weaponId, out WeaponSO weaponSO)) {
+            return;
+        }
+
+        SwitchWeapon(weaponSO);
+        AdjustAmmo(ammoAmount);
+    }
+
+    private bool TryGetWeaponById(int weaponId, out WeaponSO weaponSO) {
+        foreach(WeaponSO candidate in weaponList) {
+            if(candidate != null && candidate.ID == weaponId) {
+                weaponSO = candidate;
+                return true;
+            }
+        }
+
+        weaponSO = null;
+        return false;
     }
 }

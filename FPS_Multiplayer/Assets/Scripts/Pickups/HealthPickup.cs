@@ -11,7 +11,7 @@ public class HealthPickup : Pickup
         {
             playerHealth.AdjustHealth(healthGain);
             SoundFXManager.instance.PlaySoundFX(pickupClip, other.transform);
-            Destroy(gameObject);
+            ConsumePickup();
         }
     }
 }

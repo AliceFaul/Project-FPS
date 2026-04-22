@@ -31,8 +31,10 @@ public class EnemyHealth : NetworkBehaviour {
             return;       
         }
         this.gameManager = gameManager;
-        if(Object.HasStateAuthority) {
+        if(Object.HasStateAuthority && this.gameManager != null) {
             this.gameManager.AdjustEnemiesLeft(1);
+        } else {
+            Debug.LogWarning("[EnemyHealth]: EnemyHealth gameManager missing");
         }
     }
 
@@ -69,11 +71,11 @@ public class EnemyHealth : NetworkBehaviour {
             return;
         }
         isDead = true;
-        if(!Object.HasStateAuthority) {
+        if(!Object.HasStateAuthority || gameManager == null) {
             return;
         }
         dropSpawnPos = Vector3.zero; // reset drop pos
-        gameManager.AdjustEnemiesLeft(-1);
+        gameManager?.AdjustEnemiesLeft(-1);
         // Play fx in all player
         RPC_PlayExplosionFX(transform.position);
         // Spawn drop item by network

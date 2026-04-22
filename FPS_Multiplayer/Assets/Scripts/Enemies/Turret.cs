@@ -21,14 +21,17 @@ public class Turret : NetworkBehaviour {
 
     bool isShotReady = false;
 
+    [Networked] private Quaternion NetworkTurretHeadRotation { get; set; }
+
     public override void Spawned() {
         gameManager = FindFirstObjectByType<GameManager>();
         if(gameManager != null) {
             GetComponent<EnemyHealth>().Init(gameManager);
+            Debug.Log("[Turret]: Initialize enemyHealth successfully");
         } else {
             Debug.LogError("[Turret]: GameManager is NULL");
         }
-        // run only in server
+        // run fire routine in start of game and only in server 
         if(Object.HasStateAuthority) {
             StartCoroutine(FireRoutine());
         }
@@ -36,11 +39,16 @@ public class Turret : NetworkBehaviour {
 
     void Update()
     {
-        EnsurePlayerTarget();
-        if(playerTargetPoint) {
-            targeting.LookAt(playerTargetPoint.position);
-            euler = targeting.eulerAngles;
-            turretHead.eulerAngles = new Vector3(euler.x, euler.y, turretHead.eulerAngles.z);
+        EnsurePlayerTarget(); // Find player frame by frame
+        // Check run on server and has target
+        if(Object != null && Object.HasStateAuthority && playerTargetPoint && targeting != null) {
+            targeting.LookAt(playerTargetPoint.position); // change targeting look at target point
+            euler = targeting.eulerAngles; // get euler of targeting
+            NetworkTurretHeadRotation = Quaternion.Euler(euler.x, euler.y, turretHead.eulerAngles.z); // set networkRotation as euler got
+        }
+
+        if(turretHead != null) {
+            turretHead.rotation = NetworkTurretHeadRotation; // change rotation of turret head by networkRotation
         }
     }
 
@@ -79,16 +87,20 @@ public class Turret : NetworkBehaviour {
         Quaternion projectileRotation = shootDirection.sqrMagnitude > 0f
             ? Quaternion.LookRotation(shootDirection)
             : projectileSpawnPoint.rotation;
-
-        var obj = Runner.Spawn(projectilePrefab, projectileSpawnPoint.position, projectileRotation);
-        if(obj == null) {
-            return;
+        if(projectilePrefab != null && projectileSpawnPoint != null && projectileRotation != null) {
+            var obj = Runner.Spawn(projectilePrefab, projectileSpawnPoint.position, projectileRotation);
+            if(obj == null) {
+                Debug.LogWarning("[Turret]: Runner is NULL or missing projectile prefab");
+                return;
+            }
+            obj.GetComponent<Projectile>().Init(damage);
+            SoundFXManager.instance.PlaySoundFX(shootClip, transform);
         }
-        obj.GetComponent<Projectile>().Init(damage);
-        SoundFXManager.instance.PlaySoundFX(shootClip, transform);
     }
 
+    // function find and set player as target
     private void EnsurePlayerTarget() {
+        // find player
         if (player == null) {
             player = GetClosestPlayer();
         }
@@ -97,7 +109,7 @@ public class Turret : NetworkBehaviour {
             playerTargetPoint = null;
             return;
         }
-
+        // set target as PlayerCameraRoot
         if (playerTargetPoint == null) {
             var target = player.transform.Find("PlayerCameraRoot");
             playerTargetPoint = target != null ? target : player.transform;

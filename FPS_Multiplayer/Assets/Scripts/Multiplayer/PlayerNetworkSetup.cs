@@ -127,6 +127,74 @@ public class PlayerNetworkSetup : NetworkBehaviour {
         return Players.TryGet(playerRef, out metaData);
     } 
 
+    public void GrantAmmoPickup(int weaponId, float ammoPortion) {
+        if(Object == null) {
+            return;
+        }
+
+        RPC_GrantAmmoPickup(weaponId, ammoPortion);
+    }
+
+    public void GrantWeaponPickup(int weaponId, int ammoAmount) {
+        if(Object == null) {
+            return;
+        }
+
+        RPC_GrantWeaponPickup(weaponId, ammoAmount);
+    }
+
+    public void GrantDecreaseSpread(float decreaseAmount) {
+        if(Object == null) {
+            return;
+        }
+
+        RPC_GrantDecreaseSpread(decreaseAmount);
+    }
+
+    public void GrantIncreaseMaxAmmo() {
+        if(Object == null) {
+            return;
+        }
+
+        RPC_GrantIncreaseMaxAmmo();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.InputAuthority)]
+    private void RPC_GrantAmmoPickup(int weaponId, float ammoPortion) {
+        if(activeWeapon == null) {
+            return;
+        }
+
+        activeWeapon.GrantAmmoForWeapon(weaponId, ammoPortion);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.InputAuthority)]
+    private void RPC_GrantWeaponPickup(int weaponId, int ammoAmount) {
+        if(activeWeapon == null) {
+            return;
+        }
+
+        activeWeapon.GrantWeaponPickup(weaponId, ammoAmount);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.InputAuthority)]
+    private void RPC_GrantDecreaseSpread(float decreaseAmount) {
+        if(activeWeapon == null) {
+            return;
+        }
+
+        activeWeapon.DecreaseSpread(decreaseAmount);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.InputAuthority)]
+    private void RPC_GrantIncreaseMaxAmmo() {
+        if(activeWeapon == null) {
+            return;
+        }
+
+        activeWeapon.IncreaseMaxAmmo();
+    }
+ 
     public IPlayerMetaData GetLocalPlayerData() { 
         if(Runner == null) {
             Debug.LogWarning("[PlayerNetworkSetup] Runner is NULL");
