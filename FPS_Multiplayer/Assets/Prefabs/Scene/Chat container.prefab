@@ -169,6 +169,7 @@ GameObject:
   - component: {fileID: 5229735562783258988}
   - component: {fileID: 8669114702335613397}
   - component: {fileID: 6563861414537834553}
+  - component: {fileID: 1134923171518898171}
   m_Layer: 5
   m_Name: Chat panel
   m_TagString: Untagged
@@ -235,6 +236,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!225 &1134923171518898171
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 975519050843981872}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1127360131937733121
 GameObject:
   m_ObjectHideFlags: 0
@@ -268,8 +281,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 50, y: -50}
-  m_SizeDelta: {x: 100, y: 100}
+  m_AnchoredPosition: {x: 50, y: -20.192802}
+  m_SizeDelta: {x: 100, y: 60.3856}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &4250203182634598938
 MonoBehaviour:
@@ -285,9 +298,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Padding:
     m_Left: 20
-    m_Right: 20
-    m_Top: 10
-    m_Bottom: 20
+    m_Right: 0
+    m_Top: 20
+    m_Bottom: 0
   m_ChildAlignment: 0
   m_Spacing: 0
   m_ChildForceExpandWidth: 1
@@ -1145,6 +1158,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8113002115157454744}
+  - component: {fileID: 2912481833937176953}
   m_Layer: 5
   m_Name: Chat container
   m_TagString: Untagged
@@ -1174,6 +1188,26 @@ RectTransform:
   m_AnchoredPosition: {x: -742, y: 359}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2912481833937176953
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6261850427660222310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9ee75303e5ccee41a339dd00bbf41e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  chatContent: {fileID: 4742225642139438944}
+  chatItem: {fileID: 1316154837558845552, guid: ded39bb99095ef6448f724299bc7f509, type: 3}
+  chatInput: {fileID: 908886131379925104}
+  chatPanel: {fileID: 975519050843981872}
+  maxMessages: 5
+  panelCanvasGroup: {fileID: 1134923171518898171}
+  fadeDelay: 4
+  fadeDuration: 1.5
 --- !u!1 &6585719472911156343
 GameObject:
   m_ObjectHideFlags: 0

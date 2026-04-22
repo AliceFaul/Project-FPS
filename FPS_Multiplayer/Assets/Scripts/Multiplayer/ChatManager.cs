@@ -1,5 +1,6 @@
 using Fusion;
 using System;
+using UnityEngine;
 
 public class ChatManager : NetworkBehaviour {
     public static ChatManager Instance { get; private set; }
@@ -12,18 +13,20 @@ public class ChatManager : NetworkBehaviour {
     }
 
     public void SendChat(string rawMessage) { 
-        if(!Object.HasInputAuthority) {
+        if(Runner == null || Object == null) {
             return;
         }
         if(string.IsNullOrWhiteSpace(rawMessage)) {
             return;
         }
         string playerName = PlayerNameStorage.GetPlayerName();
-        string finalMessage = $"<b><{playerName}>:</b> {rawMessage}";
+        Color playerNameColor = PlayerInfo.ResolvePlayerNameColor(Runner.LocalPlayer);
+        string playerNameColorHex = ColorUtility.ToHtmlStringRGB(playerNameColor);
+        string finalMessage = $"<color=#{playerNameColorHex}><b>{playerName}:</b></color> {rawMessage}";
         RPC_SendToServer(finalMessage);
     }
 
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void RPC_SendToServer(string message) { 
         if(string.IsNullOrWhiteSpace(message)) {
             return;
