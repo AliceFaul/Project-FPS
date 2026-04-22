@@ -23,6 +23,7 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private float spawnRadius = 3f;
     [SerializeField] private GameObject mainCamera;
+    [SerializeField] private Canvas loadingCanvas;
     [SerializeField] private LobbyManager lobbyManager;
 
     private void Awake() {
@@ -37,6 +38,9 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
         await SceneManager.LoadSceneAsync(SceneManager.GetActiveScene().buildIndex + 1, LoadSceneMode.Additive);
         if(mainCamera != null) {
             mainCamera.SetActive(false);
+        }
+        if(loadingCanvas != null) {
+            loadingCanvas.gameObject.SetActive(false);
         }
         lobbyManager = FindFirstObjectByType<LobbyManager>();
     }
