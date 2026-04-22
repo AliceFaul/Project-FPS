@@ -154,6 +154,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3609462322932117851, guid: 420e9e69a82573a40adafc5d57e9fcd9, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6627342353198957782}
+    - targetCorrespondingSourceObject: {fileID: 3609462322932117851, guid: 420e9e69a82573a40adafc5d57e9fcd9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -1265442503736112395}
   m_SourcePrefab: {fileID: 100100000, guid: 420e9e69a82573a40adafc5d57e9fcd9, type: 3}
 --- !u!1 &1447972363273169743 stripped
 GameObject:
@@ -183,6 +186,36 @@ CapsuleCollider:
   m_Height: 1
   m_Direction: 1
   m_Center: {x: -0, y: 0, z: 0}
+--- !u!114 &-1265442503736112395
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1447972363273169743}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SortKey: 1281320656
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 5791638232844759176}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &5791638232844759176 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8534129579977403036, guid: 420e9e69a82573a40adafc5d57e9fcd9, type: 3}
+  m_PrefabInstance: {fileID: 2742509562635262484}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1447972363273169743}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6c557080bf8f164bb4f149b07adb6a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &7385020096515276224 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4644202205536413652, guid: 420e9e69a82573a40adafc5d57e9fcd9, type: 3}

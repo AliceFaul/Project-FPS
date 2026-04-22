@@ -4877,6 +4877,7 @@ GameObject:
   - component: {fileID: 3323406118101666583}
   - component: {fileID: -640561063293151064}
   - component: {fileID: -440054540567639095}
+  - component: {fileID: -1461067810657729761}
   m_Layer: 6
   m_Name: Sniper Rifle
   m_TagString: Untagged
@@ -5108,6 +5109,24 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &-1461067810657729761
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7520168404553587119}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SortKey: 840180319
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours: []
+  ForceRemoteRenderTimeframe: 0
 --- !u!1 &8640665517399054452
 GameObject:
   m_ObjectHideFlags: 0

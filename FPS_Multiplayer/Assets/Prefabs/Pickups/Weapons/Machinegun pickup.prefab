@@ -158,7 +158,21 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3609462322932117851, guid: 420e9e69a82573a40adafc5d57e9fcd9, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8089410194465026807}
+    - targetCorrespondingSourceObject: {fileID: 3609462322932117851, guid: 420e9e69a82573a40adafc5d57e9fcd9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3533704586855553147}
   m_SourcePrefab: {fileID: 100100000, guid: 420e9e69a82573a40adafc5d57e9fcd9, type: 3}
+--- !u!114 &1015735937489746410 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8534129579977403036, guid: 420e9e69a82573a40adafc5d57e9fcd9, type: 3}
+  m_PrefabInstance: {fileID: 8680635330079511414}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5359473827357008429}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6c557080bf8f164bb4f149b07adb6a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &4036433199839917218 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4644202205536413652, guid: 420e9e69a82573a40adafc5d57e9fcd9, type: 3}
@@ -192,3 +206,22 @@ CapsuleCollider:
   m_Height: 1
   m_Direction: 1
   m_Center: {x: -0, y: 0, z: 0}
+--- !u!114 &3533704586855553147
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5359473827357008429}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SortKey: 3733941396
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 1015735937489746410}
+  ForceRemoteRenderTimeframe: 0

@@ -25,19 +25,21 @@ public class ActiveWeapon : MonoBehaviour
     Animator animator;
     FirstPersonController firstPersonController;
     StarterAssetsInputs starterAssetsInputs;
+    PlayerNetworkSetup playerNetworkSetup;
     Vector3 weaponIconSizeMod = new(1.3f, 1.3f, 1.3f);
     Weapon currentWeapon;
 
     public WeaponSO[] WeaponList => weaponList; 
 
-    static int[] checkpointAmmoList = null;
-    static int[] maxAmmoList = { 20, 56, 12, 8 };
-    static bool[] weaponsPickedUp = {false, false, false, false};
-    static bool[] CheckpointWeaponsPickedUp = null;
+    int[] checkpointAmmoList = null;
+    int[] maxAmmoList = { 20, 56, 12, 8 };
+    bool[] weaponsPickedUp = {false, false, false, false};
+    bool[] checkpointWeaponsPickedUp = null;
 
     float defaultFOV;
     float defaultZoomRotationSpeed;
     float coolDown = 0f;
+    float spreadControl = 1f;
     int currentAmmo = 0;
     int currentWeaponID = 0;
 
@@ -51,29 +53,10 @@ public class ActiveWeapon : MonoBehaviour
     {
         starterAssetsInputs = GetComponentInParent<StarterAssetsInputs>();
         animator = GetComponent<Animator>();
-        // defaultFOV = playerFollowCam.m_Lens.FieldOfView;
         firstPersonController = GetComponentInParent<FirstPersonController>();
-        // defaultZoomRotationSpeed = firstPersonController.RotationSpeed;
-
-        // for (int i = 0; i < weaponList.Length; i++)
-        // {
-        //     weaponList[i].PickedUp = weaponsPickedUp[i];
-        //     weaponList[i].MagazineSize = maxAmmoList[i];
-        // }
-
-        // foreach(GameObject icon in weaponIcons)
-        // {
-        //     icon.SetActive(false);
-        // }
-
-        // if(checkpointAmmoList != null) currentAmmoList = checkpointAmmoList;
-        // if(CheckpointWeaponsPickedUp != null) weaponsPickedUp = CheckpointWeaponsPickedUp;
+        playerNetworkSetup = GetComponentInParent<PlayerNetworkSetup>();
     }
 
-    // Initialize is called in PlayerNetworkSetup 
-    // when the player spawns in, to set up the weapon system with the correct references and values. 
-    // This is necessary because the player object is not active at the start of the scene, 
-    // so Awake cannot be used to set up these references and values.
     public void Initialize(
         Camera weaponCam, 
         CinemachineVirtualCamera playerFollowCam, 
@@ -108,20 +91,11 @@ public class ActiveWeapon : MonoBehaviour
         }
 
         if(checkpointAmmoList != null) currentAmmoList = checkpointAmmoList;
-        if(CheckpointWeaponsPickedUp != null) weaponsPickedUp = CheckpointWeaponsPickedUp;
+        if(checkpointWeaponsPickedUp != null) weaponsPickedUp = checkpointWeaponsPickedUp;
 
         SwitchWeapon(startingWeaponSO);
         isInitialized = true;
     }
-
-    // void Start()
-    // {
-    //     SwitchWeapon(startingWeaponSO);
-    //     for (int i = 0; i < weaponList.Length; i++)
-    //     {
-    //         if (weaponList[i].PickedUp) weaponIcons[i].SetActive(true);
-    //     }
-    // }
 
     void Update()
     {
@@ -162,7 +136,7 @@ public class ActiveWeapon : MonoBehaviour
         if (coolDown >= currentWeaponSO.FireRate && currentAmmo > 0)
         {
             coolDown = 0f;
-            currentWeapon.Shoot(currentWeaponSO);
+            currentWeapon.Shoot(currentWeaponSO, playerNetworkSetup, spreadControl);
             animator.Play(currentWeaponSO.shootString, 0, 0f);
             AdjustAmmo(-1);
         }
@@ -253,6 +227,7 @@ public class ActiveWeapon : MonoBehaviour
         {
             weaponsPickedUp[i] = weaponList[i].PickedUp;
         }
+        checkpointWeaponsPickedUp = (bool[])weaponsPickedUp.Clone();
     }
 
     public void IncreaseMaxAmmo()
@@ -263,4 +238,36 @@ public class ActiveWeapon : MonoBehaviour
         }
     }
 
+    public void DecreaseSpread(float decreaseAmount) {
+        spreadControl = Mathf.Clamp(spreadControl - decreaseAmount, 0.1f, 1f);
+    }
+
+    public void GrantAmmoForWeapon(int weaponId, float ammoPortion) {
+        if(!TryGetWeaponById(weaponId, out WeaponSO weaponSO)) {
+            return;
+        }
+
+        AdjustAmmo(weaponSO, ammoPortion);
+    }
+
+    public void GrantWeaponPickup(int weaponId, int ammoAmount) {
+        if(!TryGetWeaponById(weaponId, out WeaponSO weaponSO)) {
+            return;
+        }
+
+        SwitchWeapon(weaponSO);
+        AdjustAmmo(ammoAmount);
+    }
+
+    private bool TryGetWeaponById(int weaponId, out WeaponSO weaponSO) {
+        foreach(WeaponSO candidate in weaponList) {
+            if(candidate != null && candidate.ID == weaponId) {
+                weaponSO = candidate;
+                return true;
+            }
+        }
+
+        weaponSO = null;
+        return false;
+    }
 }

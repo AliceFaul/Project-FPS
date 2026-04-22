@@ -22,6 +22,8 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
     [SerializeField] private NetworkPrefabRef playerPrefab;
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private float spawnRadius = 3f;
+    [SerializeField] private GameObject mainCamera;
+    [SerializeField] private LobbyManager lobbyManager;
 
     private void Awake() {
         if(_runner == null) {
@@ -32,6 +34,11 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
 
     private async void Start() {
         await StartLobby();
+        await SceneManager.LoadSceneAsync(SceneManager.GetActiveScene().buildIndex + 1, LoadSceneMode.Additive);
+        if(mainCamera != null) {
+            mainCamera.SetActive(false);
+        }
+        lobbyManager = FindFirstObjectByType<LobbyManager>();
     }
 
     // function let player join lobby in start of game
@@ -178,6 +185,13 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
             spawnRotation = Quaternion.identity;
         }
 
+        NetworkCharacterController networkCharacterController = playerHealth.GetComponent<NetworkCharacterController>();
+        if(networkCharacterController != null) {
+            networkCharacterController.Velocity = Vector3.zero;
+            networkCharacterController.Teleport(spawnPosition, spawnRotation);
+            return;
+        }
+
         Transform playerTransform = playerHealth.transform;
         CharacterController characterController = playerHealth.GetComponent<CharacterController>();
         if(characterController != null) {
@@ -220,7 +234,9 @@ public class NetworkRunnerManager : MonoBehaviour, INetworkRunnerCallbacks {
     public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
     public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) { }
     public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
-    public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
+    public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { 
+        lobbyManager?.DisplayRoomList(sessionList);
+    }
     public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
     public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
     public void OnSceneLoadDone(NetworkRunner runner) {

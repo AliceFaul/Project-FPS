@@ -1,12 +1,18 @@
+using Fusion;
 using UnityEngine;
 
 public class IncrRobExplTimer : Pickup
 {
     protected override void OnPickup(Collider other)
     {
-        Robot.IncreaseExplTimer();
+        RPC_IncreaseRobotExplodeTimer();
         Notification();
         SoundFXManager.instance.PlaySoundFX(pickupClip, other.transform);
-        Destroy(gameObject);
+        ConsumePickup();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_IncreaseRobotExplodeTimer() {
+        Robot.IncreaseExplTimer();
     }
 }
