@@ -57,8 +57,14 @@ public class GameManager : NetworkBehaviour
 
     public void QuitButton()
     {
-        Debug.LogWarning("Does not work in Unity Editor");
-        Application.Quit();
+        var runnerManager = FindFirstObjectByType<NetworkRunnerManager>();
+        if (runnerManager != null)
+        {
+            runnerManager.LeaveRoomAndReturnToMainMenu();
+            return;
+        }
+
+        SceneManager.LoadScene(NetworkRunnerManager.MainMenuSceneName);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
