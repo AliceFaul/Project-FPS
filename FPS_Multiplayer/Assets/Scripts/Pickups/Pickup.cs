@@ -32,5 +32,19 @@ public abstract class Pickup : NetworkBehaviour
         NotificationManager.instance.FireNotification(notificationText);
     }
 
+    protected bool TryGetPlayerSetup(Collider other, out PlayerNetworkSetup playerSetup) {
+        playerSetup = other.GetComponentInParent<PlayerNetworkSetup>();
+        return playerSetup != null;
+    }
+
+    protected void ConsumePickup() {
+        if(Runner != null && Object != null) {
+            Runner.Despawn(Object);
+            return;
+        }
+
+        Destroy(gameObject);
+    }
+
     protected abstract void OnPickup(Collider other);
 }
