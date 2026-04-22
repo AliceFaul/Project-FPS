@@ -30,6 +30,7 @@ public class Robot : NetworkBehaviour {
         if(!Object.HasStateAuthority) {
             agent.enabled = false;
         } else {
+            agent.enabled = true;
             agent.updatePosition = true;
             agent.updateRotation = true;
         }
@@ -47,7 +48,7 @@ public class Robot : NetworkBehaviour {
         if(player == null) {
             return;
         }
-        agent.SetDestination(player.transform.position);
+        agent?.SetDestination(player.transform.position);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -71,7 +72,7 @@ public class Robot : NetworkBehaviour {
         if(initializedSelfDestruct) {
             return;
         }
-        if(other.CompareTag(PLAYER_STRING) && !initializedSelfDestruct) {
+        if(other.GetComponentInParent<PlayerHealth>() != null && !initializedSelfDestruct) {
             initializedSelfDestruct = true;
             StartCoroutine(SelfDestructRoutine());
         }
