@@ -13,7 +13,7 @@ public class FieldOfView : MonoBehaviour {
     public bool canSeePlayer;
     public Vector3 lastKnownPosition;
     
-    private List<Transform> visibleTargets = new List<Transform>();
+    [HideInInspector] public List<Transform> visibleTargets = new List<Transform>();
 
     private void Start() {
         StartCoroutine(FindTargetsWithDelay(.2f));
