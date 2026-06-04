@@ -104,7 +104,7 @@ public class FusionPlayerController : NetworkBehaviour {
             Transform target = transform.Find("PlayerCameraRoot");
             if(target != null) {
                 cinemachineCameraTarget = target.gameObject;
-            }
+            } 
         }
         if(cinemachineCameraTarget != null) {
             _cameraTargetBaseLocalPosition = cinemachineCameraTarget.transform.localPosition;

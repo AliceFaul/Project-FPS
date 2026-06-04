@@ -47,6 +47,12 @@ public class Turret : NetworkBehaviour {
             NetworkTurretHeadRotation = Quaternion.Euler(euler.x, euler.y, turretHead.eulerAngles.z); // set networkRotation as euler got
         }
 
+        // if(turretHead != null) {
+        //     turretHead.rotation = NetworkTurretHeadRotation; // change rotation of turret head by networkRotation
+        // }
+    }
+
+    public override void Render() {
         if(turretHead != null) {
             turretHead.rotation = NetworkTurretHeadRotation; // change rotation of turret head by networkRotation
         }

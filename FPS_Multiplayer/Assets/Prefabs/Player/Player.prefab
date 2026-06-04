@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3932523327278385741}
   - component: {fileID: 785001780699749373}
   - component: {fileID: 8028732335339148246}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Active weapon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -129,7 +129,7 @@ GameObject:
   - component: {fileID: 1789448726504012015}
   - component: {fileID: 7330214119962692694}
   - component: {fileID: 5272445575765710514}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -566,7 +566,7 @@ GameObject:
   - component: {fileID: 6075034557155124486}
   - component: {fileID: 4393700732993558916}
   - component: {fileID: 992468669043944532}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Capsule
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -652,7 +652,7 @@ GameObject:
   - component: {fileID: 20592721852628253}
   - component: {fileID: 109845963057206407}
   - component: {fileID: 94289265767022007}
-  m_Layer: 5
+  m_Layer: 7
   m_Name: PlayerName
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -789,7 +789,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2343107042455149130}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: PlayerCameraRoot
   m_TagString: CinemachineTarget
   m_Icon: {fileID: 0}
@@ -824,7 +824,7 @@ GameObject:
   - component: {fileID: 4187820345976527462}
   - component: {fileID: 6695616348851039383}
   - component: {fileID: 7081352686356231227}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Weapon camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -954,7 +954,7 @@ GameObject:
   - component: {fileID: 2060383709924114091}
   - component: {fileID: 2831913757814677797}
   - component: {fileID: 4965321286413939815}
-  m_Layer: 5
+  m_Layer: 7
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
