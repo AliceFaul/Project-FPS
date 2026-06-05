@@ -22,7 +22,7 @@ public abstract class Node {
 public class Selector : Node {
     protected List<Node> nodes = new List<Node>(); // The list of child nodes
 
-    protected Selector(List<Node> nodes) { 
+    public Selector(List<Node> nodes) { 
         this.nodes = nodes; // Constructor to initialize the list of child nodes
     }
 
@@ -53,7 +53,6 @@ public class Sequence : Node {
     }
 
     public override NodeStatus Evaluate() { 
-        bool anyChildRunning = false; // Flag to check if any child is running
         foreach(Node node in nodes) { // Loop through each child node
             switch(node.Evaluate()) { // Evaluate the child node and check its status
                 case NodeStatus.Failure:
@@ -62,11 +61,11 @@ public class Sequence : Node {
                 case NodeStatus.Success:
                     continue; // If the child returns success, continue to the next child
                 case NodeStatus.Running:
-                    anyChildRunning = true; // If the child returns running, set the flag to true
-                    continue; // Continue to the next child
+                    status = NodeStatus.Running; // If the child returns running, set the sequence's status to running
+                    return status; // Return the sequence's status
             }
         }
-        status = anyChildRunning ? NodeStatus.Running : NodeStatus.Success; // If any child is running, set the sequence's status to running, otherwise set it to success
+        status = NodeStatus.Success; // If all children return success, set the sequence's status to success
         return status; // Return the sequence's status
     }
 }
