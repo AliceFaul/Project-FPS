@@ -1,5 +1,6 @@
 using UnityEngine;
 using Fusion;
+using UnityEngine.AI;
 
 public class EnemyHealth : NetworkBehaviour {
     [SerializeField] GameObject[] ammoDrop;
@@ -61,7 +62,15 @@ public class EnemyHealth : NetworkBehaviour {
         }
         NetworkHealth = nextHealth;
         if(NetworkHealth <= 0) {
-            SelfDestruct();
+            // SelfDestruct();
+            if(GetComponent<NavMeshAgent>() != null) {
+                GetComponent<NavMeshAgent>().enabled = false; // Disable NavMeshAgent to prevent movement after death
+                GetComponent<NavMeshAgent>().isStopped = true;
+                if(GetComponent<Animator>() != null) {
+                    isDead = true;
+                    GetComponent<Animator>().SetTrigger("Die"); // Play death animation if available
+                }
+            }
         }
     }
 
