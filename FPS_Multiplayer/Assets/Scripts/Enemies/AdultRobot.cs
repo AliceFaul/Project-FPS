@@ -31,6 +31,10 @@ public class AdultRobot : NetworkBehaviour {
     [SerializeField] private float aimTurnSpeed = 8f;
     [SerializeField] private float tacticalCoverDistance = 12f;
 
+    [Header("Ammo Settings")]
+    [SerializeField] private int magazineSize = 10;
+    [SerializeField] private float reloadCooldown = 2f;
+
     [Header("Patrol")]
     [SerializeField] private Transform[] patrolWaypoints;
     [SerializeField] private float waypointReachDistance = 1.25f;
@@ -46,6 +50,11 @@ public class AdultRobot : NetworkBehaviour {
     [SerializeField] private float searchPointInterval = 1.5f;
     [SerializeField] private float searchPointReachDistance = 1.25f;
 
+    [Header("Audio")]
+    [SerializeField] private AudioClip[] footstepClips;
+    [SerializeField] private float footstepInterval = 0.4f;
+
+    private float nextFootstepTime;
     public float pathUpdateInterval = 1f; // Time interval for updating the path to the player
 
     private GameManager gameManager;
@@ -62,15 +71,23 @@ public class AdultRobot : NetworkBehaviour {
     private float pathUpdateDeadline;
     private float targetUpdateDeadline;
     private float fireDeadline;
+    private float currentAmmo;
+    private float coverBlendTarget;
     private float searchDeadline;
     private float nextSearchPointTime;
     private bool hasCurrentDestination;
     private bool hasLastKnownPlayerPosition;
     private bool hasSearchPoint;
     private bool isSearching;
+    private bool isReloading;
+    private bool inCombat;
+    private bool inCover;
 
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
+    private static readonly int CoverHash = Animator.StringToHash("Cover");
+    private static readonly int CombatHash = Animator.StringToHash("Combat");
     private static readonly int ShootHash = Animator.StringToHash("Shooting");
+    private static readonly int ReloadHash = Animator.StringToHash("Reload");
 
     public Node rootNode; // Root node of the behavior tree
 
@@ -78,6 +95,7 @@ public class AdultRobot : NetworkBehaviour {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponentInChildren<Animator>();
         enemyHealth = GetComponent<EnemyHealth>();
+        currentAmmo = magazineSize;
         if(combat == null) {
             combat = GetComponentInChildren<AdultRobotCombat>();
         }
@@ -128,29 +146,37 @@ public class AdultRobot : NetworkBehaviour {
 
         rootNode.Evaluate();
         UpdateAnimator();
+        UpdateFootsteps();
     }
 
     private void InitializeBehaviorTree() { 
         rootNode = new Selector(new List<Node> {
+            // Survive behavior
             new Sequence(new List<Node> {
                 new TaskNode(IsLowHealth),
+                new TaskNode(NeedsReloadNode),
+                new TaskNode(ReloadWeapon),
                 new TaskNode(HasVisiblePlayer),
                 new TaskNode(HasHidingSpot),
                 new TaskNode(MoveToHidingSpot)
             }),
+            // Shoot behavior
             new Sequence(new List<Node> {
                 new TaskNode(HasVisiblePlayer),
                 new TaskNode(IsTargetInShootingRange),
                 new TaskNode(ShootTarget)
             }),
+            // Chase behavior
             new Sequence(new List<Node> {
                 new TaskNode(HasVisiblePlayer),
                 new TaskNode(ChaseTarget)
             }),
+            // Search behavior
             new Sequence(new List<Node> {
                 new TaskNode(HasSearchMemory),
                 new TaskNode(SearchLastKnownPosition)
             }),
+            // Patrol behavior
             new TaskNode(Patrol)
         });
     }
@@ -161,6 +187,19 @@ public class AdultRobot : NetworkBehaviour {
         }
 
         return NodeStatus.Success;
+    }
+
+    private NodeStatus NeedsReloadNode() {
+        return NeedsReload() ? NodeStatus.Success : NodeStatus.Failure;
+    }
+
+    private NodeStatus ReloadWeapon() {
+        if(!isReloading) {
+            isReloading = true;
+            StopAgent();
+            animator.SetTrigger(ReloadHash);
+        }
+        return NodeStatus.Running;
     }
 
     private NodeStatus HasVisiblePlayer() {
@@ -197,6 +236,8 @@ public class AdultRobot : NetworkBehaviour {
         if(IsAtPosition(activeHidingSpot.position, hidingReachDistance)) {
             StopAgent();
             LookAtTarget();
+            inCover = true;
+            coverBlendTarget = 1f;
             if(IsTargetInShootingRange() == NodeStatus.Success) {
                 TryShoot();
             }
@@ -204,6 +245,8 @@ public class AdultRobot : NetworkBehaviour {
         }
 
         MoveTo(activeHidingSpot.position);
+        inCover = false;
+        coverBlendTarget = 0f;
         return NodeStatus.Running;
     }
 
@@ -217,6 +260,7 @@ public class AdultRobot : NetworkBehaviour {
     }
 
     private NodeStatus ShootTarget() {
+        inCombat = true;
         StopOrMoveToTacticalCover();
         LookAtTarget();
         TryShoot();
@@ -228,6 +272,8 @@ public class AdultRobot : NetworkBehaviour {
             return NodeStatus.Failure;
         }
 
+        coverBlendTarget = 0f;
+        inCombat = false;
         activeHidingSpot = null;
         MoveTo(player.transform.position);
         return NodeStatus.Running;
@@ -264,6 +310,7 @@ public class AdultRobot : NetworkBehaviour {
     private NodeStatus Patrol() {
         ResetSearch();
         activeHidingSpot = null;
+        coverBlendTarget = 0f;
 
         if(patrolWaypoints == null || patrolWaypoints.Length == 0) {
             StopAgent();
@@ -418,20 +465,33 @@ public class AdultRobot : NetworkBehaviour {
 
     private void StopOrMoveToTacticalCover() {
         Transform nearbyCover = FindClosestHidingSpot(tacticalCoverDistance);
-        if(nearbyCover != null && !IsAtPosition(nearbyCover.position, hidingReachDistance)) {
-            MoveTo(nearbyCover.position);
+        if(nearbyCover != null) {
+            if(!IsAtPosition(nearbyCover.position, hidingReachDistance)) {
+                MoveTo(nearbyCover.position);
+                inCover = false;
+                coverBlendTarget = 0f;
+                if(animator != null) {
+                    animator.SetFloat(CoverHash, 0f);
+                }
+                return;
+            }
+
+            StopAgent();
+            inCover = true;
+            coverBlendTarget = 1f;
             return;
         }
 
         StopAgent();
+        inCover = false;
+        coverBlendTarget = 0f;
     }
 
     private void TryShoot() {
-        if(player == null || Time.time < fireDeadline) {
+        if(player == null || Time.time < fireDeadline || isReloading || currentAmmo <= 0f) {
             return;
         }
 
-        animator.SetTrigger(ShootHash);
         fireDeadline = Time.time + fireCooldown;
     }
 
@@ -449,7 +509,13 @@ public class AdultRobot : NetworkBehaviour {
             }
         }
 
+        currentAmmo = Mathf.Max(0, currentAmmo - 1);
         PlayShootSound();
+    }
+
+    public void AnimationReloadEvent() {
+        currentAmmo = magazineSize;
+        isReloading = false;
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -472,14 +538,11 @@ public class AdultRobot : NetworkBehaviour {
             return;
         }
 
-        agent.isStopped = false;
-        bool destinationChanged = !hasCurrentDestination || Vector3.SqrMagnitude(currentDestination - destination) > .25f;
-        if(destinationChanged || Time.time >= pathUpdateDeadline) {
-            currentDestination = destination;
-            hasCurrentDestination = true;
-            pathUpdateDeadline = Time.time + pathUpdateInterval;
-            agent.SetDestination(destination);
+        if(agent.isStopped) {
+            agent.isStopped = false;
         }
+
+        agent.SetDestination(destination);
     }
 
     private void StopAgent() {
@@ -503,6 +566,29 @@ public class AdultRobot : NetworkBehaviour {
         return agent.hasPath && agent.remainingDistance <= Mathf.Max(reachDistance, agent.stoppingDistance);
     }
 
+    private void PlayFootstep() {
+        if(footstepClips == null || footstepClips.Length == 0 || SoundFXManager.instance == null) {
+            return;
+        }
+
+        var clip = footstepClips[Random.Range(0, footstepClips.Length)];
+        SoundFXManager.instance.PlaySoundFX(clip, transform);
+    }
+
+    private void UpdateFootsteps() {
+        if(agent == null || !agent.enabled || agent.velocity.sqrMagnitude <= 0.01f) {
+            return;
+        }
+
+        if(Time.time < nextFootstepTime) {
+            return;
+        }
+
+        PlayFootstep();
+        float speedRatio = Mathf.Clamp01(agent.velocity.magnitude / agent.speed);
+        nextFootstepTime = Time.time + Mathf.Lerp(footstepInterval, footstepInterval * 0.5f, speedRatio);
+    }
+
     private void StartSearch() {
         isSearching = true;
         hasSearchPoint = false;
@@ -514,6 +600,13 @@ public class AdultRobot : NetworkBehaviour {
         isSearching = false;
         hasSearchPoint = false;
         hasLastKnownPlayerPosition = false;
+
+        inCombat = false;
+        animator.SetBool(CombatHash, false);
+    }
+
+    private bool NeedsReload() {
+        return currentAmmo <= 0f;
     }
 
     private Vector3 GetRandomSearchPoint() {
@@ -546,6 +639,12 @@ public class AdultRobot : NetworkBehaviour {
         }
 
         animator.SetFloat(SpeedHash, agent.velocity.magnitude);
+        animator.SetBool(ShootHash, IsTargetInShootingRange() == NodeStatus.Success);
+        animator.SetBool(CombatHash, inCombat);
+
+        float current = animator.GetFloat(CoverHash);
+        float next = Mathf.MoveTowards(current, coverBlendTarget, Time.deltaTime * 5f);
+        animator.SetFloat(CoverHash, next);
     }
 
     private void LookAtTarget() { 
