@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
+using Fusion;
 
 public class FieldOfView : MonoBehaviour {
     public float viewRadius;
@@ -15,21 +16,44 @@ public class FieldOfView : MonoBehaviour {
     
     [HideInInspector] public List<Transform> visibleTargets = new List<Transform>();
 
-    private void Start() {
-        StartCoroutine(FindTargetsWithDelay(.2f));
+    private NetworkObject networkObject;
+    private Coroutine findTargetsRoutine;
+
+    private void Awake() {
+        networkObject = GetComponentInParent<NetworkObject>();
+    }
+
+    private void OnEnable() {
+        findTargetsRoutine = StartCoroutine(FindTargetsWithDelay(.2f));
+    }
+
+    private void OnDisable() {
+        if(findTargetsRoutine != null) {
+            StopCoroutine(findTargetsRoutine);
+            findTargetsRoutine = null;
+        }
+
+        ClearVisibleTargets();
     }
 
     private IEnumerator FindTargetsWithDelay(float delay) {
+        WaitForSeconds wait = new WaitForSeconds(delay);
+
         while(true) {
-            yield return new WaitForSeconds(delay);
+            yield return wait;
+
+            if(!CanScanOnThisPeer()) {
+                ClearVisibleTargets();
+                continue;
+            }
+
             FindVisibleTargets();
         }
     }
 
     private void FindVisibleTargets() {
         // Reset
-        canSeePlayer = false;
-        visibleTargets.Clear();
+        ClearVisibleTargets();
 
         // Find targets in view radius
         Collider[] targets = Physics.OverlapSphere(transform.position, viewRadius, playerLayer);
@@ -48,6 +72,19 @@ public class FieldOfView : MonoBehaviour {
                 }
             }
         }
+    }
+
+    private bool CanScanOnThisPeer() {
+        if(networkObject == null) {
+            networkObject = GetComponentInParent<NetworkObject>();
+        }
+
+        return networkObject == null || networkObject.HasStateAuthority;
+    }
+
+    private void ClearVisibleTargets() {
+        canSeePlayer = false;
+        visibleTargets.Clear();
     }
 
     public Vector3 DirFromAngle(float angleInDegree, bool angleIsGlobal) { 
