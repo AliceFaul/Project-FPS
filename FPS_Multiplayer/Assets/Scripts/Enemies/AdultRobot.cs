@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Fusion;
 using UnityEngine.AI;
 using System.Collections.Generic;
@@ -72,6 +72,7 @@ public class AdultRobot : NetworkBehaviour {
     private float targetUpdateDeadline;
     private float fireDeadline;
     private float currentAmmo;
+    private float reloadTimer = 0f;
     private float coverBlendTarget;
     private float searchDeadline;
     private float nextSearchPointTime;
@@ -154,10 +155,15 @@ public class AdultRobot : NetworkBehaviour {
             // Survive behavior
             new Sequence(new List<Node> {
                 new TaskNode(IsLowHealth),
-                new TaskNode(NeedsReloadNode),
-                new TaskNode(ReloadWeapon),
                 new TaskNode(HasVisiblePlayer),
                 new TaskNode(HasHidingSpot),
+                new Selector(new List<Node> {
+                    new Sequence(new List<Node> {
+                        new TaskNode(NeedsReloadNode),
+                        new TaskNode(ReloadWeapon)
+                    }),
+                    new TaskNode(SuccessNode) // If no need to reload, just succeed and move to hiding spot
+                }),
                 new TaskNode(MoveToHidingSpot)
             }),
             // Shoot behavior
@@ -181,6 +187,10 @@ public class AdultRobot : NetworkBehaviour {
         });
     }
 
+    private NodeStatus SuccessNode() {
+        return NodeStatus.Success;
+    }
+
     private NodeStatus IsLowHealth() {
         if(enemyHealth == null || enemyHealth.NetworkHealth > lowHealthThreshold) {
             return NodeStatus.Failure;
@@ -196,9 +206,19 @@ public class AdultRobot : NetworkBehaviour {
     private NodeStatus ReloadWeapon() {
         if(!isReloading) {
             isReloading = true;
+            reloadTimer = Time.time + reloadCooldown;
             StopAgent();
-            animator.SetTrigger(ReloadHash);
+            if (animator != null) {
+                animator.SetTrigger(ReloadHash);
+            }
+            return NodeStatus.Running;
         }
+
+        if(Time.time >= reloadTimer) {
+            AnimationReloadEvent();
+            return NodeStatus.Success;
+        }
+
         return NodeStatus.Running;
     }
 
@@ -323,7 +343,7 @@ public class AdultRobot : NetworkBehaviour {
             return NodeStatus.Running;
         }
 
-        if(IsAtPosition(waypoint.position, waypointReachDistance)) {
+        if(!agent.pathPending && agent.hasPath && agent.remainingDistance <= waypointReachDistance) {
             AdvancePatrolIndex();
             waypoint = patrolWaypoints[patrolIndex];
         }
@@ -510,6 +530,7 @@ public class AdultRobot : NetworkBehaviour {
         }
 
         currentAmmo = Mathf.Max(0, currentAmmo - 1);
+        Debug.Log($"[AdultRobot]: Shoot at player. Current ammo: {currentAmmo}");
         PlayShootSound();
     }
 
